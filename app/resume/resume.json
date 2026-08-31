@@ -1,0 +1,84 @@
+{
+  "profile": {
+    "name": "Khalfan Athman",
+    "role": "Network Engineer & Full-Stack Developer",
+    "avatar": "https://avatars.githubusercontent.com/u/9919?s=200&v=4"
+  },
+  "contact": {
+    "email": "khalfan@khalfanathman.dev",
+    "linkedin": "https://linkedin.com/in/khalfaniathman",
+    "github": "https://github.com/AbuArwa001"
+  },
+  "experience": [
+    {
+      "title": "Assistant IT Manager (Network Engineer)",
+      "company": "Jamia Mosque Committee",
+      "period": "2023 – Present",
+      "location": "Nairobi, Kenya",
+      "achievements": [
+        "Configured, maintained, and secured enterprise-level network infrastructures.",
+        "Implemented automation scripts using Python and Bash for network configuration and monitoring tasks.",
+        "Led network security assessments, including firewall configuration and security policy enforcement.",
+        "Provided technical support and training to junior network staff."
+      ]
+    },
+    {
+      "title": "Sabbatical & Software Engineering Upskilling",
+      "company": "Independent Study (ALX Africa)",
+      "period": "July 2022 – 2023",
+      "location": "Remote",
+      "achievements": [
+        "Dedicated full-time focus to mastering full-stack software development.",
+        "Completed rigorous coursework in C programming, Linux kernel fundamentals, and full-stack web development.",
+        "Built and deployed several production-ready Next.js and DRF applications during this period."
+      ]
+    },
+    {
+      "title": "ICT Officer",
+      "company": "State Department for Livestock",
+      "period": "Jan 2020 – July 2022",
+      "location": "Nairobi, Kenya",
+      "achievements": [
+        "Supported users and optimized performance through systematic problem-solving methods.",
+        "Assisted with the preparation and installation of network and enterprise equipment.",
+        "Managed inventory and ordering of network devices."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "school": "ALX Africa",
+      "degree": "Certificate in Software Engineering",
+      "period": "Oct 2024"
+    },
+    {
+      "school": "International University of Africa",
+      "degree": "BSc in Computer Science",
+      "period": "Nov 2018"
+    }
+  ],
+  "skills": ["Python (Django/DRF)", "TypeScript (Next.js)", "Networking (TCP/IP, Firewalls)", "C & Linux Kernel", "Git/GitHub", "Bash Scripting", "PostgreSQL", "CI/CD (Jenkins)"],
+  "certifications": [
+    {
+      "name": "CCNA Candidate (Pursuing)",
+      "issuer": "Cisco",
+      "year": "In Progress"
+    },
+    {
+      "name": "AWS Solutions Architect (In Progress)",
+      "issuer": "Amazon Web Services",
+      "year": "In Progress"
+    },
+    {
+      "name": "Oracle Cloud Infrastructure Associate",
+      "issuer": "Oracle",
+      "year": "2022"
+    },
+    {
+      "name": "AWS Cloud Practitioner",
+      "issuer": "Amazon Web Services",
+      "year": "2023"
+    }
+  ],
+  "references": []
+}
