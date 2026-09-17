@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="alxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#022B3A" />
+      <stop offset="100%" stop-color="#1F7A8C" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD166" />
+      <stop offset="100%" stop-color="#E29578" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Hexagon Outer -->
+  <polygon points="200,20 360,110 360,290 200,380 40,290 40,110" 
+           fill="url(#alxGrad)" stroke="url(#goldGrad)" stroke-width="8" filter="url(#shadow)" />
+
+  <!-- Inner Hexagon Ring -->
+  <polygon points="200,40 340,120 340,280 200,360 60,280 60,120" 
+           fill="none" stroke="#FFFFFF" stroke-opacity="0.15" stroke-width="2" />
+
+  <!-- ALX Symbol / Typography -->
+  <g transform="translate(200,165)">
+    <text text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+          font-size="64" font-weight="900" fill="#FFFFFF" letter-spacing="4">ALX</text>
+    <text y="42" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+          font-size="16" font-weight="700" fill="#FFD166" letter-spacing="3">AFRICA</text>
+  </g>
+
+  <!-- Shield Ribbon / Banner -->
+  <rect x="70" y="240" width="260" height="42" rx="21" fill="#001524" stroke="url(#goldGrad)" stroke-width="2" />
+  <text x="200" y="267" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+        font-size="13" font-weight="800" fill="#FFFFFF" letter-spacing="1.5">SOFTWARE ENGINEERING</text>
+
+  <!-- Star Embellishments -->
+  <path d="M 200,80 L 204,92 L 216,92 L 206,100 L 210,112 L 200,104 L 190,112 L 194,100 L 184,92 L 196,92 Z" fill="#FFD166" />
+  <text x="200" y="325" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+        font-size="11" font-weight="600" fill="#E0FBFC" letter-spacing="1">SYSTEMS &amp; FULL-STACK</text>
+</svg>
