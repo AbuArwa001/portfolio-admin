@@ -192,32 +192,32 @@ export default function CertificationsManagementPage() {
     });
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border/60">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/[0.08]">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 mb-2 text-xs font-semibold text-purple-400 bg-purple-500/10 rounded-full border border-purple-500/20">
+          <div className="inline-flex items-center gap-2 px-3 py-1 mb-2 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-500/10 rounded-full border border-blue-500/20 font-mono">
             <Award className="h-3.5 w-3.5" />
-            <span>Credentials Management</span>
+            <span>Credentials Matrix</span>
           </div>
-          <h1 className="text-3xl font-black tracking-tight text-foreground">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-heading">
             Certifications &amp; Digital Badges
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Add or paste a credential link to automatically display the official badge and name.
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+            Add or paste a credential link to automatically display the verified Credly badge, metadata and issuer.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <a
             href={`${portfolioUrl}/cetificates`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-border/60 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-100/70 dark:bg-white/[0.03] text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-white/[0.08] transition-all"
           >
-            <Globe className="h-3.5 w-3.5" />
+            <Globe className="h-3.5 w-3.5 text-blue-500" />
             <span>View Live Page</span>
-            <ExternalLink className="h-3 w-3" />
+            <ExternalLink className="h-3 w-3 opacity-60" />
           </a>
 
           <button
@@ -225,7 +225,7 @@ export default function CertificationsManagementPage() {
               setCerts([emptyBadge(), ...certs]);
               setFilter("badge");
             }}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-500/25 transition-all cursor-pointer"
           >
             <Network className="h-4 w-4" />
             <span>+ Add Badge</span>
@@ -236,7 +236,7 @@ export default function CertificationsManagementPage() {
               setCerts([emptyCert(), ...certs]);
               setFilter("cert");
             }}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold shadow-md transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 transition-all cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>+ Add Certificate</span>
@@ -245,43 +245,43 @@ export default function CertificationsManagementPage() {
       </div>
 
       {/* Filter Tabs & Quick Stats */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center bg-card border border-border/60 p-1 rounded-xl">
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-white/80 dark:bg-[#0c1222]/80 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] shadow-sm">
+        <div className="flex items-center bg-slate-100/80 dark:bg-[#070b14] border border-slate-200 dark:border-white/[0.08] p-1 rounded-xl">
           <button
             onClick={() => setFilter("all")}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               filter === "all"
-                ? "bg-primary text-primary-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-blue-600 text-white shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             All ({certs.length})
           </button>
           <button
             onClick={() => setFilter("cert")}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               filter === "cert"
-                ? "bg-primary text-primary-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-blue-600 text-white shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             Certifications ({certs.filter((c) => c.type !== "badge").length})
           </button>
           <button
             onClick={() => setFilter("badge")}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               filter === "badge"
-                ? "bg-blue-600 text-white shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-blue-600 text-white shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             Badges ({certs.filter((c) => c.type === "badge").length})
           </button>
         </div>
 
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-slate-500 dark:text-slate-400">
           Tip: Enter a Credly or Cisco link and click{" "}
-          <span className="font-bold text-foreground">✨ Auto-Detect</span> to fetch the official badge graphic.
+          <span className="font-bold text-slate-900 dark:text-white">✨ Auto-Detect</span> to fetch the official badge graphic.
         </div>
       </div>
 
@@ -329,25 +329,25 @@ export default function CertificationsManagementPage() {
               key={cert.id ?? `new-${index}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-border/60 bg-card p-6 flex flex-col gap-5 shadow-sm"
+              className="rounded-3xl border border-slate-200 dark:border-white/[0.08] bg-white/90 dark:bg-[#0c1222]/80 backdrop-blur-xl p-6 sm:p-7 flex flex-col gap-5 shadow-sm transition-all"
             >
               {/* Item Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-border/40">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/[0.06]">
                 <div className="flex items-center gap-3 flex-wrap">
                   <span
-                    className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${
+                    className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold uppercase ${
                       cert.type === "badge"
-                        ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                        : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                        : "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"
                     }`}
                   >
                     {cert.type === "badge" ? "Digital Badge" : "Certification"}
                   </span>
-                  <span className="text-sm font-bold text-foreground">
+                  <span className="text-base font-bold text-slate-900 dark:text-white font-heading">
                     {cert.name || "Untitled Credential"}
                   </span>
                   {cert.in_progress && (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                    <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                       In Progress
                     </span>
                   )}
@@ -356,7 +356,7 @@ export default function CertificationsManagementPage() {
                 <button
                   onClick={() => handleDelete(cert, index)}
                   disabled={deleting === cert.id}
-                  className="p-1.5 rounded-lg text-red-400 hover:bg-red-400/10 transition-colors disabled:opacity-40"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-40 cursor-pointer"
                   title="Delete Credential"
                 >
                   {deleting === cert.id ? (
@@ -371,7 +371,7 @@ export default function CertificationsManagementPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Name */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Name / Official Title
                   </label>
                   <input
@@ -379,13 +379,13 @@ export default function CertificationsManagementPage() {
                     value={cert.name}
                     placeholder="e.g. CCNA: Enterprise Networking, Security..."
                     onChange={(e) => updateField(index, "name", e.target.value)}
-                    className="px-4 py-2.5 rounded-xl border border-border/60 bg-background text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />
                 </div>
 
                 {/* Issuer */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Issuing Organization
                   </label>
                   <input
@@ -393,19 +393,19 @@ export default function CertificationsManagementPage() {
                     value={cert.issuer}
                     placeholder="e.g. Cisco Networking Academy / Credly"
                     onChange={(e) => updateField(index, "issuer", e.target.value)}
-                    className="px-4 py-2.5 rounded-xl border border-border/60 bg-background text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />
                 </div>
 
                 {/* Type Selector */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Category Type
                   </label>
                   <select
                     value={cert.type || "badge"}
                     onChange={(e) => updateField(index, "type", e.target.value)}
-                    className="px-4 py-2.5 rounded-xl border border-border/60 bg-background text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white text-xs focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
                   >
                     <option value="badge">Digital Badge (Credly / Academy)</option>
                     <option value="aws">AWS Certification</option>
@@ -452,14 +452,14 @@ export default function CertificationsManagementPage() {
                           setTimeout(() => handleResolveBadgeFromLink(index, pasted), 100);
                         }
                       }}
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-border/60 bg-background text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                      className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     />
                     {cert.credential_url && (
                       <a
                         href={cert.credential_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-3 py-2.5 rounded-xl border border-border/60 bg-background hover:bg-accent text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center"
+                        className="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-100 dark:bg-[#070b14] hover:bg-slate-200 dark:hover:bg-white/[0.08] text-slate-600 dark:text-slate-300 transition-colors flex items-center justify-center"
                         title="Open Link"
                       >
                         <ExternalLink className="h-4 w-4" />
@@ -470,20 +470,20 @@ export default function CertificationsManagementPage() {
 
                 {/* Issue Date */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Issue Date
                   </label>
                   <input
                     type="date"
                     value={cert.date}
                     onChange={(e) => updateField(index, "date", e.target.value)}
-                    className="px-4 py-2.5 rounded-xl border border-border/60 bg-background text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white text-xs focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />
                 </div>
 
                 {/* Badge Image URL */}
                 <div className="md:col-span-2 flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Official Badge Graphic URL (Image path or Credly image)
                   </label>
                   <input
@@ -491,29 +491,29 @@ export default function CertificationsManagementPage() {
                     value={cert.badge || ""}
                     placeholder="/badges/cisco-ccna.png OR https://images.credly.com/..."
                     onChange={(e) => updateField(index, "badge", e.target.value)}
-                    className="px-4 py-2.5 rounded-xl border border-border/60 bg-background text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />
                 </div>
 
                 {/* In Progress */}
                 <div className="flex items-center gap-3 pt-6">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground cursor-pointer flex items-center gap-2">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 cursor-pointer flex items-center gap-2">
                     <input
                       type="checkbox"
                       checked={cert.in_progress || false}
                       onChange={(e) => updateField(index, "in_progress", e.target.checked)}
-                      className="w-4 h-4 rounded text-primary focus:ring-primary/20"
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500/20"
                     />
-                    Mark as In Progress
+                    <span>Mark as In Progress</span>
                   </label>
                 </div>
               </div>
 
               {/* Live Badge Preview Box */}
               {(cert.badge || cert.name) && (
-                <div className="p-3.5 rounded-xl bg-accent/30 border border-border/60 flex items-center justify-between gap-4">
+                <div className="p-3.5 rounded-2xl bg-slate-100/70 dark:bg-[#070b14]/60 border border-slate-200 dark:border-white/[0.08] flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-14 h-14 rounded-xl bg-background border border-border/60 p-1 flex items-center justify-center shrink-0">
+                    <div className="w-14 h-14 rounded-2xl bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-white/[0.08] p-1.5 flex items-center justify-center shrink-0 shadow-xs">
                       {cert.badge ? (
                         <img
                           src={cert.badge}
@@ -524,23 +524,23 @@ export default function CertificationsManagementPage() {
                           }}
                         />
                       ) : (
-                        <Award className="h-6 w-6 text-primary/40" />
+                        <Award className="h-6 w-6 text-blue-500/40" />
                       )}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                           <Shield className="h-3 w-3" /> Live Badge Display
                         </span>
-                        <span className="text-muted-foreground text-[10px]">·</span>
-                        <span className="text-[10px] text-muted-foreground font-mono">
+                        <span className="text-slate-400 text-[10px]">·</span>
+                        <span className="text-[10px] text-slate-500 font-mono">
                           {cert.type}
                         </span>
                       </div>
-                      <p className="text-xs font-bold text-foreground truncate mt-0.5">
+                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate mt-0.5">
                         {cert.name || "Untitled"}
                       </p>
-                      <p className="text-[10px] text-muted-foreground">
+                      <p className="text-[10px] text-slate-500">
                         {cert.issuer || "No issuer specified"} · {cert.date}
                       </p>
                     </div>
@@ -551,7 +551,7 @@ export default function CertificationsManagementPage() {
                       href={cert.credential_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline shrink-0"
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline shrink-0"
                     >
                       <span>Verify</span>
                       <ExternalLink className="h-3 w-3" />
@@ -565,7 +565,7 @@ export default function CertificationsManagementPage() {
                 <button
                   onClick={() => handleSave(cert, index)}
                   disabled={saving === (cert.id ?? "new")}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 shadow-[0_0_20px_-6px] shadow-primary/60 cursor-pointer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {saving === (cert.id ?? "new") ? (
                     <>

@@ -44,7 +44,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+      <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
         {label}
       </label>
       <input
@@ -52,7 +52,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="px-4 py-2.5 rounded-xl border border-border/60 bg-background text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+        className="px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
       />
     </div>
   );
@@ -65,16 +65,16 @@ function SelectField({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+      <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
         {label}
       </label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="px-4 py-2.5 rounded-xl border border-border/60 bg-background text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
+        className="px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white text-xs focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
       >
         {options.map((opt) => (
-          <option key={opt} value={opt} className="bg-card text-foreground">{opt}</option>
+          <option key={opt} value={opt} className="bg-white dark:bg-[#0c1222] text-slate-900 dark:text-white">{opt}</option>
         ))}
       </select>
     </div>
@@ -231,25 +231,38 @@ export default function ProjectsManagementPage() {
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-foreground font-heading">Portfolio Projects</h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Manage projects displayed on the public site ({projects.length} total)
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/15 text-blue-500 border border-blue-500/30">
+              Showcase Registry
+            </span>
+            <span className="text-[11px] font-mono text-slate-500">
+              • {projects.length} Total Projects
+            </span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight mt-1">
+            Portfolio Projects
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+            Manage live production deployments, architectural case studies, and stack tags.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <a
             href={`${portfolioUrl}/projects`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/60 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-100/70 dark:bg-white/[0.03] text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-white/[0.08] transition-all"
           >
-            <Globe className="h-3.5 w-3.5" /> Public View <ExternalLink className="h-3 w-3 opacity-60" />
+            <Globe className="h-3.5 w-3.5 text-blue-500" />
+            <span>Public View</span>
+            <ExternalLink className="h-3 w-3 opacity-60" />
           </a>
           <button
             onClick={() => setProjects((prev) => [empty(), ...prev])}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-[0_0_20px_-6px] shadow-primary/60"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/25 transition-all cursor-pointer"
           >
-            <Plus className="h-4 w-4" /> Add Project
+            <Plus className="h-4 w-4" />
+            <span>Add Project</span>
           </button>
         </div>
       </div>
@@ -261,10 +274,10 @@ export default function ProjectsManagementPage() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-medium ${
+            className={`flex items-center gap-2 px-4 py-3 rounded-2xl border text-xs font-medium ${
               toast.type === "success"
-                ? "bg-emerald-400/10 border-emerald-400/30 text-emerald-400"
-                : "bg-red-400/10 border-red-400/30 text-red-400"
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                : "bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400"
             }`}
           >
             {toast.type === "success" ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
@@ -274,12 +287,12 @@ export default function ProjectsManagementPage() {
       </AnimatePresence>
 
       {projects.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground gap-3 rounded-2xl border border-dashed border-border/60 bg-card/40">
-          <FolderKanban className="h-10 w-10 text-primary/30" />
-          <p className="text-sm font-medium">No projects found.</p>
+        <div className="flex flex-col items-center justify-center py-16 text-center text-slate-500 dark:text-slate-400 gap-3 rounded-3xl border border-dashed border-slate-300 dark:border-white/[0.1] bg-white/50 dark:bg-[#0c1222]/50">
+          <FolderKanban className="h-10 w-10 text-blue-500/40" />
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-200">No projects found.</p>
           <button
             onClick={() => setProjects([empty()])}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary border border-primary/20 text-xs font-medium hover:bg-primary/20 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 border border-blue-600/20 text-xs font-medium hover:bg-blue-600/20 transition-colors"
           >
             <Plus className="h-3.5 w-3.5" /> Create your first project
           </button>
@@ -299,19 +312,19 @@ export default function ProjectsManagementPage() {
               key={proj.id ?? `new-${idx}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-border/60 bg-card p-6 flex flex-col gap-5 shadow-sm"
+              className="rounded-3xl border border-slate-200 dark:border-white/[0.08] bg-white/90 dark:bg-[#0c1222]/80 backdrop-blur-xl p-6 sm:p-7 flex flex-col gap-5 shadow-sm transition-all"
             >
               {/* Card Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-border/40">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/[0.06]">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                  <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono">
                     Project #{idx + 1}
                   </span>
-                  <span className="text-sm font-bold text-foreground">
+                  <span className="text-base font-bold text-slate-900 dark:text-white font-heading">
                     {proj.name || "Untitled Project"}
                   </span>
                   {!proj.id && (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/20">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
                       Unsaved
                     </span>
                   )}
@@ -411,7 +424,7 @@ export default function ProjectsManagementPage() {
                   onChange={(v) => updateField(idx, "technologies", v)}
                 />
                 <div className="md:col-span-2 flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Description & Case Study Highlights
                   </label>
                   <textarea
@@ -419,7 +432,7 @@ export default function ProjectsManagementPage() {
                     value={proj.description}
                     onChange={(e) => updateField(idx, "description", e.target.value)}
                     placeholder="Describe the architectural challenge, solution, and business impact..."
-                    className="px-4 py-2.5 rounded-xl border border-border/60 bg-background text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-y"
+                    className="px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-y"
                   />
                 </div>
               </div>
@@ -430,7 +443,7 @@ export default function ProjectsManagementPage() {
                   {proj.technologies.split(",").map((t) => t.trim()).filter(Boolean).map((tech, ti) => (
                     <span
                       key={ti}
-                      className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary"
+                      className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 font-medium"
                     >
                       {tech}
                     </span>
@@ -443,7 +456,7 @@ export default function ProjectsManagementPage() {
                 <button
                   onClick={() => handleSave(proj, idx)}
                   disabled={saving === (proj.id ?? "new")}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 shadow-[0_0_20px_-6px] shadow-primary/60 cursor-pointer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {saving === (proj.id ?? "new") ? (
                     <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving...</>

@@ -33,7 +33,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+      <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
         {label}
       </label>
       <input
@@ -41,7 +41,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="px-4 py-2.5 rounded-xl border border-border/60 bg-background text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+        className="px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
       />
     </div>
   );
@@ -136,8 +136,8 @@ export default function ReferencesManagementPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-xs text-muted-foreground uppercase tracking-widest">Loading References...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <p className="text-xs text-slate-500 uppercase tracking-widest font-mono">Loading References...</p>
       </div>
     );
   }
@@ -147,25 +147,38 @@ export default function ReferencesManagementPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-foreground font-heading">Referees & Testimonials</h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Manage endorsements displayed on the public references page ({refs.length} total)
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/15 text-blue-500 border border-blue-500/30">
+              Executive Testimonials
+            </span>
+            <span className="text-[11px] font-mono text-slate-500">
+              • {refs.length} Referees
+            </span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight mt-1">
+            Referees &amp; Endorsements
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+            Manage professional references, executive letters, and verified director recommendations.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <a
             href={`${portfolioUrl}/references`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/60 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-100/70 dark:bg-white/[0.03] text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-white/[0.08] transition-all"
           >
-            <Globe className="h-3.5 w-3.5" /> Public View <ExternalLink className="h-3 w-3 opacity-60" />
+            <Globe className="h-3.5 w-3.5 text-blue-500" />
+            <span>Public View</span>
+            <ExternalLink className="h-3 w-3 opacity-60" />
           </a>
           <button
             onClick={() => setRefs((prev) => [empty(), ...prev])}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-[0_0_20px_-6px] shadow-primary/60"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/25 transition-all cursor-pointer"
           >
-            <Plus className="h-4 w-4" /> Add Referee
+            <Plus className="h-4 w-4" />
+            <span>Add Referee</span>
           </button>
         </div>
       </div>
@@ -208,19 +221,19 @@ export default function ReferencesManagementPage() {
             key={ref.id ?? `new-${idx}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-border/60 bg-card p-6 flex flex-col gap-5 shadow-sm"
+            className="rounded-3xl border border-slate-200 dark:border-white/[0.08] bg-white/90 dark:bg-[#0c1222]/80 backdrop-blur-xl p-6 sm:p-7 flex flex-col gap-5 shadow-sm transition-all"
           >
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-border/40">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/[0.06]">
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono">
                   Referee #{idx + 1}
                 </span>
-                <span className="text-sm font-bold text-foreground">
+                <span className="text-base font-bold text-slate-900 dark:text-white font-heading">
                   {ref.name || "Unnamed Referee"}
                 </span>
                 {!ref.id && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/20">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                     Unsaved
                   </span>
                 )}
@@ -229,7 +242,8 @@ export default function ReferencesManagementPage() {
               <button
                 onClick={() => handleDelete(ref, idx)}
                 disabled={deleting === ref.id}
-                className="p-1.5 rounded-lg text-red-400 hover:bg-red-400/10 transition-colors disabled:opacity-40"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-40 cursor-pointer"
+                title="Delete Referee"
               >
                 {deleting === ref.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
               </button>
@@ -284,7 +298,7 @@ export default function ReferencesManagementPage() {
                 />
               </div>
               <div className="md:col-span-2 flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Recommendation / Endorsement Quote
                 </label>
                 <textarea
@@ -292,7 +306,7 @@ export default function ReferencesManagementPage() {
                   value={ref.quote}
                   onChange={(e) => updateField(idx, "quote", e.target.value)}
                   placeholder="A testimonial detailing Khalfan's engineering competence and work ethic..."
-                  className="px-4 py-2.5 rounded-xl border border-border/60 bg-background text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-y"
+                  className="px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-y"
                 />
               </div>
             </div>
@@ -302,7 +316,7 @@ export default function ReferencesManagementPage() {
               <button
                 onClick={() => handleSave(ref, idx)}
                 disabled={saving === (ref.id ?? "new")}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 shadow-[0_0_20px_-6px] shadow-primary/60 cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 cursor-pointer"
               >
                 {saving === (ref.id ?? "new") ? (
                   <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving...</>

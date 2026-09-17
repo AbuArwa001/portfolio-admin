@@ -195,27 +195,38 @@ export default function BlogManagementPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-foreground font-heading flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-primary" /> Technical Blog Posts
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/15 text-blue-500 border border-blue-500/30">
+              Technical Journal
+            </span>
+            <span className="text-[11px] font-mono text-slate-500">
+              • {posts.length} Published Articles
+            </span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight mt-1">
+            Technical Blog &amp; Insights
           </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Publish engineering writeups, network architecture guides, and tutorials ({posts.length} published)
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+            Publish engineering writeups, network architecture guides, and cloud infrastructure tutorials.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <a
             href={`${portfolioUrl}/blog`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border/60 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-100/70 dark:bg-white/[0.03] text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-white/[0.08] transition-all"
           >
-            <Globe className="h-3.5 w-3.5" /> Public View <ExternalLink className="h-3 w-3 opacity-60" />
+            <Globe className="h-3.5 w-3.5 text-blue-500" />
+            <span>Public View</span>
+            <ExternalLink className="h-3 w-3 opacity-60" />
           </a>
           <button
             onClick={handleCreateNew}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-[0_0_20px_-6px] shadow-primary/60 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/25 transition-all cursor-pointer"
           >
-            <Plus className="h-4 w-4" /> New Article
+            <Plus className="h-4 w-4" />
+            <span>New Article</span>
           </button>
         </div>
       </div>
@@ -227,10 +238,10 @@ export default function BlogManagementPage() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-medium ${
+            className={`flex items-center gap-2 px-4 py-3 rounded-2xl border text-xs font-medium ${
               toast.type === "success"
-                ? "bg-emerald-400/10 border-emerald-400/30 text-emerald-400"
-                : "bg-red-400/10 border-red-400/30 text-red-400"
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                : "bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400"
             }`}
           >
             {toast.type === "success" ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
@@ -246,12 +257,12 @@ export default function BlogManagementPage() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            className="rounded-2xl border border-primary/30 bg-card/90 backdrop-blur-xl p-6 shadow-2xl space-y-5"
+            className="rounded-3xl border border-blue-500/30 dark:border-blue-500/20 bg-white/95 dark:bg-[#0c1222]/95 backdrop-blur-xl p-6 sm:p-8 shadow-2xl space-y-5"
           >
-            <div className="flex items-center justify-between border-b border-border/60 pb-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/[0.08] pb-4">
               <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                <h3 className="text-base font-bold text-foreground">
+                <FileText className="h-5 w-5 text-blue-600 dark:text-primary" />
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white font-heading">
                   {activePost.id ? "Edit Article" : "Compose New Article"}
                 </h3>
               </div>
@@ -269,7 +280,7 @@ export default function BlogManagementPage() {
             <form onSubmit={handleSave} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2 flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Article Title
                   </label>
                   <input
@@ -278,11 +289,11 @@ export default function BlogManagementPage() {
                     value={activePost.title}
                     onChange={(e) => handleTitleChange(e.target.value)}
                     placeholder="e.g. Scaling Django REST APIs with PostgreSQL"
-                    className="px-4 py-2.5 rounded-xl border border-border/60 bg-background text-foreground text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     URL Slug
                   </label>
                   <input
@@ -291,20 +302,20 @@ export default function BlogManagementPage() {
                     value={activePost.slug}
                     onChange={(e) => setActivePost({ ...activePost, slug: slugify(e.target.value) })}
                     placeholder="scaling-django-apis"
-                    className="px-4 py-2.5 rounded-xl border border-border/60 bg-background text-foreground text-sm font-mono focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />
                 </div>
               </div>
 
               {/* Tab selector */}
-              <div className="flex items-center gap-2 border-b border-border/40 pb-2">
+              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-white/[0.08] pb-2">
                 <button
                   type="button"
                   onClick={() => setEditorTab("write")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                     editorTab === "write"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   <Edit3 className="inline-block h-3.5 w-3.5 mr-1.5" /> Markdown Content
@@ -312,10 +323,10 @@ export default function BlogManagementPage() {
                 <button
                   type="button"
                   onClick={() => setEditorTab("preview")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                     editorTab === "preview"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   <Eye className="inline-block h-3.5 w-3.5 mr-1.5" /> Live Preview
@@ -331,19 +342,19 @@ export default function BlogManagementPage() {
                     value={activePost.content}
                     onChange={(e) => setActivePost({ ...activePost, content: e.target.value })}
                     placeholder="Write article content using Markdown format...&#10;&#10;## Key Architecture Tenets&#10;1. Stateless JWT Auth...&#10;2. Connection Pooling..."
-                    className="w-full px-4 py-3 rounded-xl border border-border/60 bg-background text-foreground font-mono text-sm leading-relaxed focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white font-mono text-xs leading-relaxed focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
                     Markdown supported: ## Headings, - Lists, `code`, ```codeblocks```, **bold**, *italics*.
                   </span>
                 </div>
               ) : (
-                <div className="min-h-[300px] max-h-[500px] overflow-y-auto px-6 py-4 rounded-xl border border-border/60 bg-background/50 text-foreground text-sm prose dark:prose-invert max-w-none">
+                <div className="min-h-[300px] max-h-[500px] overflow-y-auto px-6 py-4 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14]/50 text-slate-900 dark:text-white text-sm prose dark:prose-invert max-w-none">
                   <h1 className="text-2xl font-bold mb-3">{activePost.title || "Untitled Article"}</h1>
-                  <div className="text-xs text-muted-foreground font-mono mb-4 pb-2 border-b border-border/40">
+                  <div className="text-xs text-slate-500 font-mono mb-4 pb-2 border-b border-slate-200 dark:border-white/[0.08]">
                     Slug: /{activePost.slug || "slug"}
                   </div>
-                  <div className="whitespace-pre-wrap leading-relaxed text-sm">
+                  <div className="whitespace-pre-wrap leading-relaxed text-sm text-slate-800 dark:text-slate-200">
                     {activePost.content || "No content written yet."}
                   </div>
                 </div>
@@ -357,14 +368,14 @@ export default function BlogManagementPage() {
                     setIsEditing(false);
                     setActivePost(null);
                   }}
-                  className="px-4 py-2 rounded-xl border border-border/60 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-white/[0.08] text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-colors shadow-md disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   {activePost.id ? "Update Article" : "Publish Article"}
@@ -382,21 +393,21 @@ export default function BlogManagementPage() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search articles by title or slug..."
-          className="flex-1 px-4 py-2.5 rounded-xl border border-border/60 bg-card text-foreground text-xs focus:outline-none focus:border-primary transition-all"
+          className="flex-1 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white/80 dark:bg-[#0c1222]/80 text-slate-900 dark:text-white placeholder:text-slate-400 text-xs focus:outline-none focus:border-blue-500 transition-all shadow-xs"
         />
       </div>
 
       {/* Posts Listing */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-xs text-muted-foreground uppercase tracking-widest">Loading Articles...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <p className="text-xs text-slate-500 uppercase tracking-widest font-mono">Loading Articles...</p>
         </div>
       ) : filteredPosts.length === 0 ? (
-        <div className="rounded-2xl border border-border/60 bg-card/60 p-12 text-center space-y-3">
-          <BookOpen className="h-10 w-10 text-muted-foreground mx-auto opacity-50" />
-          <h3 className="text-sm font-bold text-foreground">No articles found</h3>
-          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+        <div className="rounded-3xl border border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-[#0c1222]/60 p-12 text-center space-y-3">
+          <BookOpen className="h-10 w-10 text-slate-400 mx-auto opacity-50" />
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white font-heading">No articles found</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
             {searchQuery ? "Try a different search query." : "Publish your first technical article using the button above."}
           </p>
         </div>
@@ -410,21 +421,21 @@ export default function BlogManagementPage() {
               <motion.div
                 key={post.id}
                 layout
-                className="rounded-2xl border border-border/60 bg-card p-5 hover:border-primary/40 transition-all shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
+                className="rounded-3xl border border-slate-200 dark:border-white/[0.08] bg-white/90 dark:bg-[#0c1222]/80 backdrop-blur-xl p-6 hover:border-blue-500/40 transition-all shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
               >
                 <div className="space-y-1.5 flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-bold text-foreground hover:text-primary transition-colors truncate">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate font-heading">
                       {post.title}
                     </h3>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/[0.05] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/[0.05]">
                       /{post.slug}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
                     {post.content.slice(0, 200)}...
                   </p>
-                  <div className="flex items-center gap-4 text-[11px] text-muted-foreground/70 pt-1">
+                  <div className="flex items-center gap-4 text-[11px] text-slate-500 dark:text-slate-400 pt-1 font-mono">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {post.created_at ? new Date(post.created_at).toLocaleDateString() : "Draft"}
@@ -441,14 +452,14 @@ export default function BlogManagementPage() {
                     href={`${portfolioUrl}/blog/${post.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 rounded-xl border border-border/60 text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+                    className="p-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-100/70 dark:bg-white/[0.03] text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-500/10 transition-colors"
                     title="View public article"
                   >
                     <ExternalLink className="h-4 w-4" />
                   </a>
                   <button
                     onClick={() => handleEdit(post)}
-                    className="p-2 rounded-xl border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                    className="p-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-100/70 dark:bg-white/[0.03] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
                     title="Edit article"
                   >
                     <Edit3 className="h-4 w-4" />
@@ -456,7 +467,7 @@ export default function BlogManagementPage() {
                   <button
                     onClick={() => handleDelete(post)}
                     disabled={deletingId === post.id}
-                    className="p-2 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-400/10 transition-colors cursor-pointer disabled:opacity-50"
+                    className="p-2 rounded-xl border border-red-500/20 text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer disabled:opacity-50"
                     title="Delete article"
                   >
                     {deletingId === post.id ? (
