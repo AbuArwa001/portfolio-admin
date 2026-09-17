@@ -12,6 +12,7 @@ import {
   Code2,
   User,
   FileText,
+  BookOpen,
   ExternalLink,
   LogOut,
   Sparkles,
@@ -53,6 +54,12 @@ const NAV_ITEMS = [
     url: "/dashboard/skills",
     icon: Code2,
     description: "Technical proficiency",
+  },
+  {
+    title: "Blog Posts",
+    url: "/dashboard/blog",
+    icon: BookOpen,
+    description: "Articles & technical writing",
   },
   {
     title: "Profile & Bio",

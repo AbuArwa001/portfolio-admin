@@ -342,6 +342,30 @@ export const api = {
     get: (): Promise<BlogPost[]> => publicFetch("/blog/"),
     getBySlug: (slug: string): Promise<BlogPost> =>
       publicFetch(`/blog/?slug=${slug}`),
+    create: async (data: Partial<BlogPost>): Promise<BlogPost> => {
+      const response = await fetch("/api/v1/blog/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    },
+    update: async (id: number, data: Partial<BlogPost>): Promise<BlogPost> => {
+      const response = await fetch(`/api/v1/blog/${id}/`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    },
+    delete: async (id: number): Promise<void> => {
+      const response = await fetch(`/api/v1/blog/${id}/`, {
+        method: "DELETE",
+      });
+      if (!response.ok && response.status !== 204) throw new Error(`HTTP ${response.status}`);
+    },
   },
   contact: {
     create: (data: { name: string; email: string; message: string }) =>

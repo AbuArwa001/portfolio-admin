@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   Clock,
   Sparkles,
+  BookOpen,
 } from "lucide-react";
 
 export default function DashboardOverviewPage() {
@@ -31,6 +32,7 @@ export default function DashboardOverviewPage() {
     referencesCount: 0,
     certificationsCount: 0,
     skillsCount: 0,
+    blogCount: 0,
     loading: true,
   });
 
@@ -40,21 +42,28 @@ export default function DashboardOverviewPage() {
   useEffect(() => {
     const fetchCounts = async () => {
       try {
-        const [projRes, refRes, certRes] = await Promise.allSettled([
+        const [projRes, refRes, certRes, blogRes, skillRes] = await Promise.allSettled([
           fetch(`${apiUrl}/api/v1/projects/`),
           fetch(`${apiUrl}/api/v1/references/`),
           fetch(`${apiUrl}/api/v1/certifications/`),
+          fetch(`${apiUrl}/api/v1/blog/`),
+          fetch(`${apiUrl}/api/v1/auth/profile/skills/`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          }),
         ]);
 
         const projData = projRes.status === "fulfilled" && projRes.value.ok ? await projRes.value.json() : [];
         const refData = refRes.status === "fulfilled" && refRes.value.ok ? await refRes.value.json() : [];
         const certData = certRes.status === "fulfilled" && certRes.value.ok ? await certRes.value.json() : [];
+        const blogData = blogRes.status === "fulfilled" && blogRes.value.ok ? await blogRes.value.json() : [];
+        const skillData = skillRes.status === "fulfilled" && skillRes.value.ok ? await skillRes.value.json() : [];
 
         setStats({
           projectsCount: Array.isArray(projData) ? projData.length : 0,
           referencesCount: Array.isArray(refData) ? refData.length : 0,
           certificationsCount: Array.isArray(certData) ? certData.length : 0,
-          skillsCount: 15,
+          skillsCount: Array.isArray(skillData) && skillData.length > 0 ? skillData.length : 19,
+          blogCount: Array.isArray(blogData) ? blogData.length : 0,
           loading: false,
         });
       } catch {
@@ -63,13 +72,13 @@ export default function DashboardOverviewPage() {
     };
 
     fetchCounts();
-  }, [apiUrl]);
+  }, [apiUrl, token]);
 
   const cards = [
     {
       title: "Projects",
       count: stats.projectsCount,
-      label: "Portfolio Showcase",
+      label: "Live & Ongoing Work",
       href: "/dashboard/projects",
       icon: FolderKanban,
       color: "from-blue-500 to-indigo-600",
@@ -78,7 +87,7 @@ export default function DashboardOverviewPage() {
     {
       title: "Certifications",
       count: stats.certificationsCount,
-      label: "Badges & Credentials",
+      label: "Credentials & Badges",
       href: "/dashboard/certifications",
       icon: Award,
       color: "from-purple-500 to-pink-600",
@@ -94,13 +103,22 @@ export default function DashboardOverviewPage() {
       accent: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
     },
     {
-      title: "Skills & Stack",
+      title: "Skills & Tech",
       count: stats.skillsCount,
       label: "Proficiency Tags",
       href: "/dashboard/skills",
       icon: Code2,
       color: "from-amber-500 to-orange-600",
       accent: "text-amber-400 bg-amber-400/10 border-amber-400/20",
+    },
+    {
+      title: "Blog Posts",
+      count: stats.blogCount,
+      label: "Technical Articles",
+      href: "/dashboard/blog",
+      icon: BookOpen,
+      color: "from-rose-500 to-red-600",
+      accent: "text-rose-400 bg-rose-400/10 border-rose-400/20",
     },
   ];
 
@@ -150,7 +168,7 @@ export default function DashboardOverviewPage() {
       </motion.div>
 
       {/* Metric Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {cards.map((card, i) => {
           const Icon = card.icon;
           return (
@@ -162,27 +180,27 @@ export default function DashboardOverviewPage() {
             >
               <Link
                 href={card.href}
-                className="flex flex-col justify-between p-6 rounded-2xl border border-border/60 bg-card hover:border-primary/40 transition-all group h-full shadow-sm hover:shadow-lg hover:shadow-primary/5"
+                className="flex flex-col justify-between p-5 rounded-2xl border border-border/60 bg-card hover:border-primary/40 transition-all group h-full shadow-sm hover:shadow-lg hover:shadow-primary/5"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className={`p-2.5 rounded-xl border ${card.accent}`}>
-                      <Icon className="h-5 w-5" />
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={`p-2 rounded-xl border ${card.accent}`}>
+                      <Icon className="h-4 w-4" />
                     </span>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </div>
                   <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     {card.title}
                   </h3>
-                  <div className="text-3xl font-black text-foreground mt-1 font-heading">
+                  <div className="text-2xl font-black text-foreground mt-1 font-heading">
                     {stats.loading ? (
-                      <div className="h-8 w-12 bg-muted/40 animate-pulse rounded" />
+                      <div className="h-7 w-10 bg-muted/40 animate-pulse rounded" />
                     ) : (
                       card.count
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border/40">
+                <p className="text-[11px] text-muted-foreground mt-2 pt-2 border-t border-border/40">
                   {card.label}
                 </p>
               </Link>
@@ -201,7 +219,7 @@ export default function DashboardOverviewPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
             <Link
               href="/dashboard/projects"
-              className="p-4 rounded-xl border border-border/60 hover:bg-white/5 transition-colors flex items-center justify-between group"
+              className="p-3.5 rounded-xl border border-border/60 hover:bg-white/5 transition-colors flex items-center justify-between group"
             >
               <div className="flex items-center gap-3">
                 <FolderKanban className="h-4 w-4 text-blue-400" />
@@ -214,8 +232,22 @@ export default function DashboardOverviewPage() {
             </Link>
 
             <Link
+              href="/dashboard/blog"
+              className="p-3.5 rounded-xl border border-border/60 hover:bg-white/5 transition-colors flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-3">
+                <BookOpen className="h-4 w-4 text-rose-400" />
+                <div>
+                  <div className="text-xs font-semibold text-foreground">Blog Articles</div>
+                  <div className="text-[11px] text-muted-foreground">Compose & publish</div>
+                </div>
+              </div>
+              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+            </Link>
+
+            <Link
               href="/dashboard/references"
-              className="p-4 rounded-xl border border-border/60 hover:bg-white/5 transition-colors flex items-center justify-between group"
+              className="p-3.5 rounded-xl border border-border/60 hover:bg-white/5 transition-colors flex items-center justify-between group"
             >
               <div className="flex items-center gap-3">
                 <Quote className="h-4 w-4 text-emerald-400" />
@@ -229,7 +261,7 @@ export default function DashboardOverviewPage() {
 
             <Link
               href="/dashboard/certifications"
-              className="p-4 rounded-xl border border-border/60 hover:bg-white/5 transition-colors flex items-center justify-between group"
+              className="p-3.5 rounded-xl border border-border/60 hover:bg-white/5 transition-colors flex items-center justify-between group"
             >
               <div className="flex items-center gap-3">
                 <Award className="h-4 w-4 text-purple-400" />
@@ -242,14 +274,28 @@ export default function DashboardOverviewPage() {
             </Link>
 
             <Link
-              href="/dashboard/profile"
-              className="p-4 rounded-xl border border-border/60 hover:bg-white/5 transition-colors flex items-center justify-between group"
+              href="/dashboard/skills"
+              className="p-3.5 rounded-xl border border-border/60 hover:bg-white/5 transition-colors flex items-center justify-between group"
             >
               <div className="flex items-center gap-3">
-                <User className="h-4 w-4 text-amber-400" />
+                <Code2 className="h-4 w-4 text-amber-400" />
                 <div>
-                  <div className="text-xs font-semibold text-foreground">Profile & Avatar</div>
-                  <div className="text-[11px] text-muted-foreground">Personal details & bio</div>
+                  <div className="text-xs font-semibold text-foreground">Skills & Stack</div>
+                  <div className="text-[11px] text-muted-foreground">Proficiency & tags</div>
+                </div>
+              </div>
+              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+            </Link>
+
+            <Link
+              href="/dashboard/profile"
+              className="p-3.5 rounded-xl border border-border/60 hover:bg-white/5 transition-colors flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-3">
+                <User className="h-4 w-4 text-sky-400" />
+                <div>
+                  <div className="text-xs font-semibold text-foreground">Profile & Bio</div>
+                  <div className="text-[11px] text-muted-foreground">Personal details</div>
                 </div>
               </div>
               <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
