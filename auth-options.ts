@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { getApiUrl } from "@/lib/config";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -13,18 +14,20 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+          const API_URL = getApiUrl();
+          const username = credentials.email.trim();
           const res = await fetch(`${API_URL}/api/v1/auth/login/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              username: credentials.email,
+              username: username,
               password: credentials.password,
             }),
           });
 
           if (!res.ok) {
-            console.error("DRF Login failed:", res.status);
+            const errText = await res.text().catch(() => "");
+            console.error("DRF Login failed:", res.status, errText);
             return null;
           }
 
@@ -33,7 +36,7 @@ export const authOptions: NextAuthOptions = {
           if (data.access) {
             // Fetch user profile if possible
             let name = "Admin User";
-            let email = credentials.email;
+            let email = username;
             try {
               const meRes = await fetch(`${API_URL}/api/v1/auth/me/`, {
                 headers: { Authorization: `Bearer ${data.access}` },
@@ -69,7 +72,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "khalfan-portfolio-admin-secret-2026",
   pages: {
     signIn: "/auth/signin",
   },

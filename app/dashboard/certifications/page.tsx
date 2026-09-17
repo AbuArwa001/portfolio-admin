@@ -18,6 +18,7 @@ import {
   Shield,
   Layers,
 } from "lucide-react";
+import { getApiUrl } from "@/lib/config";
 
 interface Certification {
   id?: number;
@@ -53,7 +54,7 @@ const emptyBadge = (): Certification => ({
 export default function CertificationsManagementPage() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken as string | undefined;
-  const API = `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/v1/certifications/`;
+  const API = `${getApiUrl()}/api/v1/certifications/`;
   const portfolioUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL || "http://localhost:3000";
 
   const [certs, setCerts] = useState<Certification[]>([]);

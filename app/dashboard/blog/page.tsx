@@ -20,6 +20,7 @@ import {
   X,
   FileText,
 } from "lucide-react";
+import { getApiUrl } from "@/lib/config";
 
 interface BlogPost {
   id?: number;
@@ -48,7 +49,7 @@ function slugify(text: string): string {
 export default function BlogManagementPage() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken as string | undefined;
-  const API = `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/v1/blog/`;
+  const API = `${getApiUrl()}/api/v1/blog/`;
   const portfolioUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL || "http://localhost:3000";
 
   const [posts, setPosts] = useState<BlogPost[]>([]);

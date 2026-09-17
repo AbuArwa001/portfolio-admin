@@ -22,6 +22,7 @@ import {
   Sparkles,
   BookOpen,
 } from "lucide-react";
+import { getApiUrl } from "@/lib/config";
 
 export default function DashboardOverviewPage() {
   const { data: session } = useSession();
@@ -36,7 +37,7 @@ export default function DashboardOverviewPage() {
     loading: true,
   });
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const apiUrl = getApiUrl();
   const portfolioUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL || "http://localhost:3000";
 
   useEffect(() => {

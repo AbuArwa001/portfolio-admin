@@ -7,6 +7,7 @@ import {
   Plus, Trash2, Save, Loader2, CheckCircle2, AlertCircle,
   FolderKanban, ExternalLink, ImageIcon, X, Upload, Globe,
 } from "lucide-react";
+import { getApiUrl } from "@/lib/config";
 
 interface Project {
   id?: number;
@@ -83,7 +84,7 @@ function SelectField({
 export default function ProjectsManagementPage() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken as string | undefined;
-  const API = `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/v1/projects/`;
+  const API = `${getApiUrl()}/api/v1/projects/`;
   const portfolioUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL || "http://localhost:3000";
 
   const [projects, setProjects] = useState<Project[]>([]);

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Trash2, Save, Quote, Loader2, CheckCircle2, AlertCircle, ExternalLink, Globe,
 } from "lucide-react";
+import { getApiUrl } from "@/lib/config";
 
 interface Reference {
   id?: number;
@@ -49,7 +50,7 @@ function Field({
 export default function ReferencesManagementPage() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken as string | undefined;
-  const API = `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/v1/references/`;
+  const API = `${getApiUrl()}/api/v1/references/`;
   const portfolioUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL || "http://localhost:3000";
 
   const [refs, setRefs] = useState<Reference[]>([]);

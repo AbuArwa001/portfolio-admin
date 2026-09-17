@@ -52,17 +52,19 @@ const nextConfig = {
   },
   outputFileTracingRoot: __dirname,
   async rewrites() {
+    const rawApi = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === "production" ? "https://api.khalfanathman.dev" : "http://127.0.0.1:8000");
+    const apiDestination = (rawApi.startsWith("http://") || rawApi.startsWith("https://") ? rawApi : `https://${rawApi}`).replace(/\/+$/, "");
     return {
       beforeFiles: [],
       afterFiles: [],
       fallback: [
         {
           source: '/api/v1/:path*',
-          destination: 'http://127.0.0.1:8000/api/v1/:path*',
+          destination: `${apiDestination}/api/v1/:path*`,
         },
         {
           source: '/api/:path*',
-          destination: 'http://127.0.0.1:8000/api/v1/:path*',
+          destination: `${apiDestination}/api/v1/:path*`,
         },
       ],
     };

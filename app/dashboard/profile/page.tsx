@@ -7,11 +7,12 @@ import {
   Save, User, Mail, Phone, MapPin, Globe, Github, Linkedin, Twitter,
   Upload, CheckCircle2, AlertCircle, Loader2,
 } from "lucide-react";
+import { getApiUrl } from "@/lib/config";
 
 export default function ProfileManagementPage() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken as string | undefined;
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const API_URL = getApiUrl();
 
   const [profile, setProfile] = useState({
     first_name: "Khalfan",

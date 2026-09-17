@@ -18,16 +18,22 @@ export default function SignInPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-    setLoading(false);
-    if (res?.ok) {
-      router.push("/dashboard");
-    } else {
-      setError("Invalid username/email or password.");
+    try {
+      const res = await signIn("credentials", {
+        email: email.trim(),
+        password,
+        redirect: false,
+      });
+      setLoading(false);
+      if (res?.ok) {
+        router.push("/dashboard");
+        router.refresh();
+      } else {
+        setError("Invalid username/email or password.");
+      }
+    } catch {
+      setLoading(false);
+      setError("An unexpected error occurred. Please try again.");
     }
   };
 

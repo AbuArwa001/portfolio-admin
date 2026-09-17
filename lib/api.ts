@@ -216,7 +216,7 @@ async function refreshToken() {
   } catch (error) {
     console.error("Token refresh failed:", error);
     // Redirect to login or handle authentication failure
-    window.location.href = "/auth/login";
+    window.location.href = "/auth/signin";
     throw error;
   }
 }

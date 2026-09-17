@@ -15,6 +15,7 @@ import {
   Globe,
   Layers,
 } from "lucide-react";
+import { getApiUrl } from "@/lib/config";
 
 interface SkillCategory {
   id: number;
@@ -32,7 +33,7 @@ interface Skill {
 export default function SkillsManagementPage() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken as string | undefined;
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const API_BASE = getApiUrl();
   const portfolioUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL || "http://localhost:3000";
 
   const [skills, setSkills] = useState<Skill[]>([]);
