@@ -1,62 +1,74 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
-import { ExternalLink, Globe, Sparkles, LogOut, User, Bell } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { ExternalLink, Globe, Sparkles, Server, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-const TITLES: Record<string, { title: string; subtitle: string }> = {
-  "/dashboard": { title: "Dashboard Overview", subtitle: "System status & summary metrics" },
-  "/dashboard/projects": { title: "Projects Management", subtitle: "Manage showcase projects and case studies" },
-  "/dashboard/certifications": { title: "Certifications & Credentials", subtitle: "Manage certifications and licenses" },
-  "/dashboard/references": { title: "References & Testimonials", subtitle: "Manage referee quotes and contact details" },
-  "/dashboard/skills": { title: "Skills & Technologies", subtitle: "Manage technical skills and proficiency levels" },
-  "/dashboard/profile": { title: "Profile & Bio", subtitle: "Update personal information and contact details" },
-  "/dashboard/cv": { title: "CV & Résumé Editor", subtitle: "Edit timeline, achievements, and JSON records" },
+const TITLES: Record<string, { title: string; subtitle: string; category: string }> = {
+  "/dashboard": { title: "Operations Overview", subtitle: "System telemetry & operational health", category: "Mission Control" },
+  "/dashboard/projects": { title: "Projects Management", subtitle: "Showcase case studies & live production deployments", category: "Portfolio" },
+  "/dashboard/certifications": { title: "Certifications & Credentials", subtitle: "AWS, Oracle & Cisco verified digital credentials", category: "Credentials" },
+  "/dashboard/references": { title: "Executive References", subtitle: "Client quotes, directors & professional testimonials", category: "Reputation" },
+  "/dashboard/skills": { title: "Technical Skills Matrix", subtitle: "Proficiency levels across backend, network & DevOps", category: "Competencies" },
+  "/dashboard/profile": { title: "Profile & Identity", subtitle: "Update bio, social links, location & avatar", category: "Identity" },
+  "/dashboard/cv": { title: "CV & Résumé Editor", subtitle: "Curate career timeline & structured JSON records", category: "Career" },
+  "/dashboard/blog": { title: "Technical Blog Publishing", subtitle: "Compose, publish and manage architectural insights", category: "Publications" },
 };
 
 export function SiteHeader() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const current = TITLES[pathname] || { title: "Admin Portal", subtitle: "Manage portfolio records" };
-  const portfolioUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL || "http://localhost:3000";
+  const current = TITLES[pathname] || {
+    title: "Admin Portal",
+    subtitle: "Manage portfolio records",
+    category: "Management",
+  };
+  const portfolioUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL || "https://khalfanathman.dev";
 
   return (
-    <header className="h-16 border-b border-border/60 bg-card/40 backdrop-blur-xl px-8 flex items-center justify-between sticky top-0 z-30">
-      <div>
-        <h1 className="text-base font-bold text-foreground leading-tight font-heading">
+    <header className="h-16 border-b border-white/[0.08] bg-[#070b14]/80 backdrop-blur-2xl px-6 sm:px-8 flex items-center justify-between sticky top-0 z-30 selection:bg-primary/30">
+      {/* Left: Breadcrumbs & Dynamic Page Identity */}
+      <div className="flex flex-col">
+        <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-slate-400">
+          <span>Console</span>
+          <ChevronRight className="h-3 w-3 opacity-60" />
+          <span className="text-primary font-semibold">{current.category}</span>
+        </div>
+        <h1 className="text-sm sm:text-base font-bold text-white leading-tight font-heading flex items-center gap-2">
           {current.title}
         </h1>
-        <p className="text-xs text-muted-foreground">
-          {current.subtitle}
-        </p>
       </div>
 
+      {/* Right: Live Connection Indicator & Quick Action Pills */}
       <div className="flex items-center gap-3">
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+        {/* DRF Health Badge */}
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-mono">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          DRF API Connected
+          <span>DRF API: Connected</span>
         </div>
 
+        {/* Live Site Link */}
         <a
           href={portfolioUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-border/60 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-border transition-colors"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/[0.15] text-xs font-medium text-slate-300 hover:text-white transition-all shadow-sm group"
         >
-          <Globe className="h-3.5 w-3.5" />
-          <span className="hidden md:inline">View Live Site</span>
+          <Globe className="h-3.5 w-3.5 text-blue-400 group-hover:scale-110 transition-transform" />
+          <span className="hidden md:inline">Public Portfolio</span>
           <ExternalLink className="h-3 w-3 opacity-60" />
         </a>
 
-        <div className="w-px h-6 bg-border/60 mx-1" />
+        <div className="w-px h-5 bg-white/[0.08] mx-0.5 hidden sm:block" />
 
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+        {/* User Pill */}
+        <div className="flex items-center gap-2 pl-1">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 border border-white/[0.1] flex items-center justify-center text-xs font-bold text-white shadow-sm">
             {session?.user?.name ? session.user.name.charAt(0) : "K"}
           </div>
-          <span className="text-xs font-medium text-foreground hidden sm:block">
-            {session?.user?.name || "Admin"}
+          <span className="text-xs font-semibold text-white hidden sm:block font-heading">
+            {session?.user?.name || "Khalfan"}
           </span>
         </div>
       </div>
