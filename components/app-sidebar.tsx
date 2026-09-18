@@ -23,9 +23,11 @@ import {
   Globe,
   Briefcase,
   FileSignature,
+  X,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { getApiUrl } from "@/lib/config";
+import { useSidebar } from "@/components/sidebar-context";
 
 const CAREER_ITEMS = [
   {
@@ -100,6 +102,7 @@ export function AppSidebar() {
   const { data: session } = useSession();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
+  const { mobileOpen, setMobileOpen } = useSidebar();
 
   React.useEffect(() => {
     setMounted(true);
@@ -111,26 +114,8 @@ export function AppSidebar() {
   const portfolioUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL || "https://khalfanathman.dev";
   const apiUrl = getApiUrl();
 
-  return (
-    <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-white/[0.08] bg-slate-50/95 dark:bg-[#080d1a]/95 backdrop-blur-2xl flex flex-col h-screen sticky top-0 z-40 selection:bg-primary/30 text-slate-800 dark:text-slate-100 print:hidden">
-      {/* Header / Brand */}
-      <div className="p-5 border-b border-slate-200 dark:border-white/[0.08] flex items-center justify-between">
-        <Link href="/dashboard" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-primary flex items-center justify-center text-white font-black text-sm shadow-[0_0_20px_rgba(59,130,246,0.4)] group-hover:scale-105 transition-transform">
-            KA
-          </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white font-heading flex items-center gap-1.5">
-              Portfolio <span className="bg-gradient-to-r from-blue-500 to-primary bg-clip-text text-transparent">Admin</span>
-            </span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              v2.0 Control Center
-            </span>
-          </div>
-        </Link>
-      </div>
-
+  const renderNav = (closeOnNav = false) => (
+    <>
       {/* Navigation list */}
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
         {/* Career & Pipeline Section */}
@@ -147,6 +132,7 @@ export function AppSidebar() {
                 <Link
                   key={item.url}
                   href={item.url}
+                  onClick={() => closeOnNav && setMobileOpen(false)}
                   className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all group ${
                     active
                       ? "bg-blue-600/10 dark:bg-gradient-to-r dark:from-blue-600/20 dark:via-primary/10 dark:to-transparent text-blue-700 dark:text-white font-semibold border-l-2 border-blue-600 dark:border-primary shadow-sm"
@@ -194,6 +180,7 @@ export function AppSidebar() {
                 <Link
                   key={item.url}
                   href={item.url}
+                  onClick={() => closeOnNav && setMobileOpen(false)}
                   className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all group ${
                     active
                       ? "bg-blue-600/10 dark:bg-gradient-to-r dark:from-blue-600/20 dark:via-primary/10 dark:to-transparent text-blue-700 dark:text-white font-semibold border-l-2 border-blue-600 dark:border-primary shadow-sm"
@@ -311,6 +298,85 @@ export function AppSidebar() {
           </button>
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Sticky Sidebar */}
+      <aside className="hidden lg:flex w-64 flex-shrink-0 border-r border-slate-200 dark:border-white/[0.08] bg-slate-50/95 dark:bg-[#080d1a]/95 backdrop-blur-2xl flex-col h-screen sticky top-0 z-40 selection:bg-primary/30 text-slate-800 dark:text-slate-100 print:hidden">
+        {/* Header / Brand */}
+        <div className="p-5 border-b border-slate-200 dark:border-white/[0.08] flex items-center justify-between">
+          <Link href="/dashboard" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-primary flex items-center justify-center text-white font-black text-sm shadow-[0_0_20px_rgba(59,130,246,0.4)] group-hover:scale-105 transition-transform">
+              KA
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white font-heading flex items-center gap-1.5">
+                Portfolio <span className="bg-gradient-to-r from-blue-500 to-primary bg-clip-text text-transparent">Admin</span>
+              </span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                v2.0 Control Center
+              </span>
+            </div>
+          </Link>
+        </div>
+
+        {renderNav(false)}
+      </aside>
+
+      {/* Mobile Drawer (Slide-over with overlay) */}
+      <div
+        className={`fixed inset-0 z-50 lg:hidden transition-all duration-300 ${
+          mobileOpen ? "visible opacity-100" : "invisible opacity-0 pointer-events-none"
+        }`}
+      >
+        {/* Backdrop */}
+        <div
+          className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm transition-opacity"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+
+        {/* Drawer content */}
+        <aside
+          className={`fixed inset-y-0 left-0 w-72 max-w-[85vw] border-r border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-[#080d1a] shadow-2xl flex flex-col h-full z-10 selection:bg-primary/30 text-slate-800 dark:text-slate-100 transition-transform duration-300 ease-in-out ${
+            mobileOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          {/* Mobile Header with Close button */}
+          <div className="p-4 border-b border-slate-200 dark:border-white/[0.08] flex items-center justify-between">
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2.5"
+            >
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-primary flex items-center justify-center text-white font-black text-xs shadow-md">
+                KA
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white font-heading">
+                  Portfolio <span className="bg-gradient-to-r from-blue-500 to-primary bg-clip-text text-transparent">Admin</span>
+                </span>
+                <span className="text-[9px] text-slate-500 dark:text-slate-400 font-mono">
+                  v2.0 Control Center
+                </span>
+              </div>
+            </Link>
+
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
+              aria-label="Close sidebar"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {renderNav(true)}
+        </aside>
+      </div>
+    </>
   );
 }
