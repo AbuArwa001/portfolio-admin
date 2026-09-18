@@ -98,12 +98,15 @@ const CONTENT_ITEMS = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  const currentTheme = mounted ? (theme === "system" ? resolvedTheme : theme) : "dark";
+  const isDark = currentTheme === "dark";
 
   const portfolioUrl = process.env.NEXT_PUBLIC_PORTFOLIO_URL || "https://khalfanathman.dev";
   const apiUrl = getApiUrl();
@@ -281,11 +284,11 @@ export function AppSidebar() {
         {/* Action Controls */}
         <div className="flex items-center gap-1.5 pt-1">
           <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onClick={() => setTheme(isDark ? "light" : "dark")}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/[0.05] border border-slate-200 dark:border-white/[0.06] transition-colors cursor-pointer"
-            title="Toggle theme"
+            title={`Switch to ${isDark ? "light" : "dark"} mode`}
           >
-            {mounted && theme === "dark" ? (
+            {isDark ? (
               <>
                 <Sun className="h-3.5 w-3.5 text-amber-400" />
                 <span>Light</span>

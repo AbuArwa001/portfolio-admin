@@ -1,8 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ExternalLink, Globe, Sparkles, Server, ChevronRight } from "lucide-react";
+import { useTheme } from "next-themes";
+import { ExternalLink, Globe, Sparkles, Server, ChevronRight, Sun, Moon } from "lucide-react";
 import Link from "next/link";
 
 const TITLES: Record<string, { title: string; subtitle: string; category: string }> = {
@@ -21,6 +23,16 @@ const TITLES: Record<string, { title: string; subtitle: string; category: string
 export function SiteHeader() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const currentTheme = mounted ? (theme === "system" ? resolvedTheme : theme) : "dark";
+  const isDark = currentTheme === "dark";
+
   const current = TITLES[pathname] || {
     title: "Admin Portal",
     subtitle: "Manage portfolio records",
@@ -61,6 +73,20 @@ export function SiteHeader() {
           <span className="hidden md:inline">Public Portfolio</span>
           <ExternalLink className="h-3 w-3 opacity-60" />
         </a>
+
+        {/* Theme Toggle Button */}
+        <button
+          onClick={() => setTheme(isDark ? "light" : "dark")}
+          className="inline-flex items-center justify-center w-8 h-8 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-100/60 dark:bg-white/[0.03] hover:bg-slate-200/60 dark:hover:bg-white/[0.08] hover:border-slate-300 dark:hover:border-white/[0.15] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm cursor-pointer"
+          title={`Switch to ${isDark ? "light" : "dark"} mode`}
+          aria-label="Toggle theme"
+        >
+          {mounted && isDark ? (
+            <Sun className="h-4 w-4 text-amber-400" />
+          ) : (
+            <Moon className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+          )}
+        </button>
 
         <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.08] mx-0.5 hidden sm:block" />
 
