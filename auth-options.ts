@@ -2,6 +2,18 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getApiUrl } from "@/lib/config";
 
+function parseJwtExp(token: string): number {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = Buffer.from(base64, "base64").toString("utf-8");
+    const parsed = JSON.parse(jsonPayload);
+    return (parsed.exp || 0) * 1000;
+  } catch {
+    return Date.now() + 55 * 60 * 1000;
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -34,7 +46,6 @@ export const authOptions: NextAuthOptions = {
           const data = await res.json();
 
           if (data.access) {
-            // Fetch user profile if possible
             let name = "Admin User";
             let email = username;
             try {
@@ -77,15 +88,56 @@ export const authOptions: NextAuthOptions = {
     signIn: "/auth/signin",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.accessToken = (user as any).accessToken;
         token.refreshToken = (user as any).refreshToken;
+        token.accessTokenExpires = parseJwtExp((user as any).accessToken);
         token.name = user.name;
         token.email = user.email;
+        token.error = undefined;
+        return token;
       }
-      return token;
+
+      // Check if token needs refresh (either explicit update or nearing expiration within 3 mins)
+      const isExpiringSoon =
+        typeof token.accessTokenExpires === "number" &&
+        Date.now() > token.accessTokenExpires - 3 * 60 * 1000;
+
+      if (trigger !== "update" && !isExpiringSoon) {
+        return token;
+      }
+
+      if (!token.refreshToken) {
+        return { ...token, error: "TokenExpired" };
+      }
+
+      try {
+        const API_URL = getApiUrl();
+        const res = await fetch(`${API_URL}/api/v1/auth/token/refresh/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh: token.refreshToken }),
+        });
+
+        if (!res.ok) {
+          console.error("Token refresh failed, status:", res.status);
+          return { ...token, error: "TokenExpired" };
+        }
+
+        const data = await res.json();
+        return {
+          ...token,
+          accessToken: data.access,
+          accessTokenExpires: parseJwtExp(data.access),
+          refreshToken: data.refresh ?? token.refreshToken,
+          error: undefined,
+        };
+      } catch (err) {
+        console.error("Token refresh exception:", err);
+        return { ...token, error: "TokenExpired" };
+      }
     },
     async session({ session, token }) {
       if (token) {
@@ -96,8 +148,11 @@ export const authOptions: NextAuthOptions = {
         }
         (session as any).accessToken = token.accessToken;
         (session as any).refreshToken = token.refreshToken;
+        (session as any).accessTokenExpires = token.accessTokenExpires;
+        (session as any).error = token.error;
       }
       return session;
     },
   },
 };
+

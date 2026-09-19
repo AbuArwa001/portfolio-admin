@@ -27,6 +27,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { getApiUrl } from "@/lib/config";
+import { useCrudLoading } from "@/components/crud-loading-context";
+import { SkeletonCard } from "@/components/ui/premium-skeleton";
 
 interface Reference {
   id?: number;
@@ -135,59 +137,87 @@ export default function ReferencesManagementPage() {
       .finally(() => setLoading(false));
   }, [API]);
 
+  const { withLoading } = useCrudLoading();
+
   const handleSave = async (ref: Reference, idx: number) => {
     if (!token) return showToast("error", "Authentication required.");
     setSaving(ref.id ?? "new");
-    try {
-      const method = ref.id ? "PATCH" : "POST";
-      const url = ref.id ? `${API}${ref.id}/` : API;
-      const res = await fetch(url, {
-        method,
-        headers: authHeaders,
-        body: JSON.stringify(ref),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const saved: Reference = await res.json();
-      setRefs((prev) => {
-        const next = [...prev];
-        next[idx] = saved;
-        return next;
-      });
-      showToast("success", ref.id ? "Reference updated." : "Reference added.");
-    } catch {
-      showToast("error", "Failed to save reference.");
-    } finally {
-      setSaving(null);
-    }
+    await withLoading(
+      async () => {
+        try {
+          const method = ref.id ? "PATCH" : "POST";
+          const url = ref.id ? `${API}${ref.id}/` : API;
+          const res = await fetch(url, {
+            method,
+            headers: authHeaders,
+            body: JSON.stringify(ref),
+          });
+          if (res.status === 401) {
+            showToast("error", "Your session has expired. You are being logged out.");
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new CustomEvent("auth:session-expired"));
+            }
+            return;
+          }
+          if (!res.ok) throw new Error(await res.text());
+          const saved: Reference = await res.json();
+          setRefs((prev) => {
+            const next = [...prev];
+            next[idx] = saved;
+            return next;
+          });
+          showToast("success", ref.id ? "Reference updated." : "Reference added.");
+        } catch {
+          showToast("error", "Failed to save reference.");
+        } finally {
+          setSaving(null);
+        }
+      },
+      ref.id ? "Updating Reference Endorsement" : "Creating Referee Record",
+      "Synchronizing testimonial with remote PostgreSQL database"
+    );
   };
 
   const handleToggleApproval = async (ref: Reference, idx: number) => {
     if (!ref.id) return;
     if (!token) return showToast("error", "Authentication required.");
     setToggling(ref.id);
-    try {
-      const res = await fetch(`${API}${ref.id}/toggle_approval/`, {
-        method: "POST",
-        headers: authHeaders,
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      setRefs((prev) => {
-        const next = [...prev];
-        next[idx] = { ...next[idx], is_approved: data.is_approved };
-        return next;
-      });
-      showToast(
-        "success",
-        data.is_approved
-          ? "Reference approved and published to portfolio!"
-          : "Reference hidden from portfolio."
-      );
-    } catch {
-      showToast("error", "Failed to update approval status.");
-    } finally {
-      setToggling(null);
-    }
+    await withLoading(
+      async () => {
+        try {
+          const res = await fetch(`${API}${ref.id}/toggle_approval/`, {
+            method: "POST",
+            headers: authHeaders,
+          });
+          if (res.status === 401) {
+            showToast("error", "Your session has expired. You are being logged out.");
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new CustomEvent("auth:session-expired"));
+            }
+            return;
+          }
+          if (!res.ok) throw new Error(await res.text());
+          const data = await res.json();
+          setRefs((prev) => {
+            const next = [...prev];
+            next[idx] = { ...next[idx], is_approved: data.is_approved };
+            return next;
+          });
+          showToast(
+            "success",
+            data.is_approved
+              ? "Reference approved and published to portfolio!"
+              : "Reference hidden from portfolio."
+          );
+        } catch {
+          showToast("error", "Failed to update approval status.");
+        } finally {
+          setToggling(null);
+        }
+      },
+      "Toggling Approval State",
+      "Updating visibility in production portfolio database"
+    );
   };
 
   const handleDelete = async (ref: Reference, idx: number) => {
@@ -197,19 +227,32 @@ export default function ReferencesManagementPage() {
     }
     if (!token) return showToast("error", "Authentication required.");
     setDeleting(ref.id);
-    try {
-      const res = await fetch(`${API}${ref.id}/`, {
-        method: "DELETE",
-        headers: authHeaders,
-      });
-      if (!res.ok) throw new Error();
-      setRefs((prev) => prev.filter((_, i) => i !== idx));
-      showToast("success", "Reference deleted.");
-    } catch {
-      showToast("error", "Failed to delete reference.");
-    } finally {
-      setDeleting(null);
-    }
+    await withLoading(
+      async () => {
+        try {
+          const res = await fetch(`${API}${ref.id}/`, {
+            method: "DELETE",
+            headers: authHeaders,
+          });
+          if (res.status === 401) {
+            showToast("error", "Your session has expired. You are being logged out.");
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new CustomEvent("auth:session-expired"));
+            }
+            return;
+          }
+          if (!res.ok) throw new Error();
+          setRefs((prev) => prev.filter((_, i) => i !== idx));
+          showToast("success", "Reference deleted.");
+        } catch {
+          showToast("error", "Failed to delete reference.");
+        } finally {
+          setDeleting(null);
+        }
+      },
+      "Deleting Referee Record",
+      "Purging entry from PostgreSQL cluster"
+    );
   };
 
   const updateField = (idx: number, field: keyof Reference, value: any) => {
@@ -389,8 +432,14 @@ export default function ReferencesManagementPage() {
         )}
       </AnimatePresence>
 
-      {/* ── Empty State ── */}
-      {filteredRefs.length === 0 && (
+      {/* ── Loading Skeleton ── */}
+      {loading ? (
+        <div className="space-y-5">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      ) : filteredRefs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground gap-3 rounded-2xl border border-dashed border-border/60 bg-card/40">
           <Quote className="h-10 w-10 text-primary/30" />
           <p className="text-sm font-medium">
@@ -415,7 +464,7 @@ export default function ReferencesManagementPage() {
             </button>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* ── Referee Cards ── */}
       <div className="space-y-6">

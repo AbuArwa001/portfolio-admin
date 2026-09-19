@@ -8,6 +8,8 @@ import {
   FolderKanban, ExternalLink, ImageIcon, X, Upload, Globe,
 } from "lucide-react";
 import { getApiUrl } from "@/lib/config";
+import { useCrudLoading } from "@/components/crud-loading-context";
+import { SkeletonCard } from "@/components/ui/premium-skeleton";
 
 interface Project {
   id?: number;
@@ -109,60 +111,76 @@ export default function ProjectsManagementPage() {
       .finally(() => setLoading(false));
   }, [API]);
 
+  const { withLoading } = useCrudLoading();
+
   const handleSave = async (proj: Project, idx: number) => {
     if (!token) return showToast("error", "Authentication session required.");
     setSaving(proj.id ?? "new");
-    try {
-      const method = proj.id ? "PATCH" : "POST";
-      const url = proj.id ? `${API}${proj.id}/` : API;
+    await withLoading(
+      async () => {
+        try {
+          const method = proj.id ? "PATCH" : "POST";
+          const url = proj.id ? `${API}${proj.id}/` : API;
 
-      const imageFile = imageFiles[idx];
-      const shouldClear = clearedImages.has(idx);
+          const imageFile = imageFiles[idx];
+          const shouldClear = clearedImages.has(idx);
 
-      const fd = new FormData();
-      fd.append("name", proj.name);
-      fd.append("description", proj.description);
-      fd.append("link", proj.link);
-      fd.append("status", proj.status);
-      fd.append("completion", proj.completion);
-      fd.append("technologies", proj.technologies);
-      fd.append("type", proj.type);
+          const fd = new FormData();
+          fd.append("name", proj.name);
+          fd.append("description", proj.description);
+          fd.append("link", proj.link);
+          fd.append("status", proj.status);
+          fd.append("completion", proj.completion);
+          fd.append("technologies", proj.technologies);
+          fd.append("type", proj.type);
 
-      if (imageFile) {
-        fd.append("image", imageFile);
-      } else if (shouldClear) {
-        fd.append("image", "");
-      }
+          if (imageFile) {
+            fd.append("image", imageFile);
+          } else if (shouldClear) {
+            fd.append("image", "");
+          }
 
-      const res = await fetch(url, {
-        method,
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
-      });
+          const res = await fetch(url, {
+            method,
+            headers: { Authorization: `Bearer ${token}` },
+            body: fd,
+          });
 
-      if (!res.ok) throw new Error(await res.text());
-      const saved: Project = await res.json();
-      setProjects((prev) => {
-        const next = [...prev];
-        next[idx] = saved;
-        return next;
-      });
-      setImageFiles((prev) => {
-        const next = { ...prev };
-        delete next[idx];
-        return next;
-      });
-      setClearedImages((prev) => {
-        const next = new Set(prev);
-        next.delete(idx);
-        return next;
-      });
-      showToast("success", proj.id ? "Project updated successfully!" : "New project created!");
-    } catch (e: any) {
-      showToast("error", e.message || "Failed to save project.");
-    } finally {
-      setSaving(null);
-    }
+          if (res.status === 401) {
+            showToast("error", "Your session has expired. You are being logged out.");
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new CustomEvent("auth:session-expired"));
+            }
+            return;
+          }
+
+          if (!res.ok) throw new Error(await res.text());
+          const saved: Project = await res.json();
+          setProjects((prev) => {
+            const next = [...prev];
+            next[idx] = saved;
+            return next;
+          });
+          setImageFiles((prev) => {
+            const next = { ...prev };
+            delete next[idx];
+            return next;
+          });
+          setClearedImages((prev) => {
+            const next = new Set(prev);
+            next.delete(idx);
+            return next;
+          });
+          showToast("success", proj.id ? "Project updated successfully!" : "New project created!");
+        } catch (e: any) {
+          showToast("error", e.message || "Failed to save project.");
+        } finally {
+          setSaving(null);
+        }
+      },
+      proj.id ? "Updating Production Project" : "Creating New Project",
+      "Persisting project attributes to PostgreSQL database"
+    );
   };
 
   const handleDelete = async (proj: Project, idx: number) => {
@@ -172,19 +190,32 @@ export default function ProjectsManagementPage() {
     }
     if (!token) return showToast("error", "Authentication required.");
     setDeleting(proj.id);
-    try {
-      const res = await fetch(`${API}${proj.id}/`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error();
-      setProjects((prev) => prev.filter((_, i) => i !== idx));
-      showToast("success", "Project deleted.");
-    } catch {
-      showToast("error", "Failed to delete project.");
-    } finally {
-      setDeleting(null);
-    }
+    await withLoading(
+      async () => {
+        try {
+          const res = await fetch(`${API}${proj.id}/`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.status === 401) {
+            showToast("error", "Your session has expired. You are being logged out.");
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new CustomEvent("auth:session-expired"));
+            }
+            return;
+          }
+          if (!res.ok) throw new Error();
+          setProjects((prev) => prev.filter((_, i) => i !== idx));
+          showToast("success", "Project deleted.");
+        } catch {
+          showToast("error", "Failed to delete project.");
+        } finally {
+          setDeleting(null);
+        }
+      },
+      "Deleting Project Record",
+      "Purging entry from database cluster"
+    );
   };
 
   const updateField = (idx: number, field: keyof Project, value: string) => {
@@ -286,7 +317,13 @@ export default function ProjectsManagementPage() {
         )}
       </AnimatePresence>
 
-      {projects.length === 0 && (
+      {/* Loading Skeletons */}
+      {loading ? (
+        <div className="space-y-6">
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      ) : projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center text-slate-500 dark:text-slate-400 gap-3 rounded-3xl border border-dashed border-slate-300 dark:border-white/[0.1] bg-white/50 dark:bg-[#0c1222]/50">
           <FolderKanban className="h-10 w-10 text-blue-500/40" />
           <p className="text-sm font-medium text-slate-800 dark:text-slate-200">No projects found.</p>
@@ -297,7 +334,7 @@ export default function ProjectsManagementPage() {
             <Plus className="h-3.5 w-3.5" /> Create your first project
           </button>
         </div>
-      )}
+      ) : null}
 
       {/* Project Cards */}
       <div className="space-y-6">
