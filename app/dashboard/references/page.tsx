@@ -32,6 +32,7 @@ import { SkeletonCard } from "@/components/ui/premium-skeleton";
 
 interface Reference {
   id?: number;
+  _clientKey?: string;
   name: string;
   title: string;
   company: string;
@@ -45,6 +46,7 @@ interface Reference {
 }
 
 const empty = (): Reference => ({
+  _clientKey: `draft-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
   name: "",
   title: "",
   company: "",
@@ -104,7 +106,7 @@ export default function ReferencesManagementPage() {
 
   const [refs, setRefs] = useState<Reference[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState<number | "new" | null>(null);
+  const [saving, setSaving] = useState<number | string | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [toggling, setToggling] = useState<number | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
@@ -139,9 +141,37 @@ export default function ReferencesManagementPage() {
 
   const { withLoading } = useCrudLoading();
 
-  const handleSave = async (ref: Reference, idx: number) => {
+  const normalizeUrl = (raw: string): string => {
+    const trimmed = (raw || "").trim();
+    if (!trimmed) return "";
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+    return `https://${trimmed}`;
+  };
+
+  const handleSave = async (ref: Reference) => {
     if (!token) return showToast("error", "Authentication required.");
-    setSaving(ref.id ?? "new");
+    if (!ref.name.trim()) return showToast("error", "Referee Name is required.");
+    if (!ref.title.trim()) return showToast("error", "Job Title is required.");
+    if (!ref.company.trim()) return showToast("error", "Company / Organisation is required.");
+    if (!ref.relationship.trim()) return showToast("error", "Professional Relationship is required.");
+    if (!ref.quote.trim()) return showToast("error", "Recommendation quote is required.");
+
+    const savingKey = ref.id ?? ref._clientKey ?? "new";
+    setSaving(savingKey);
+
+    const payload = {
+      ...ref,
+      name: ref.name.trim(),
+      title: ref.title.trim(),
+      company: ref.company.trim(),
+      relationship: ref.relationship.trim(),
+      quote: ref.quote.trim(),
+      email: ref.email.trim(),
+      phone: ref.phone.trim(),
+      linkedin: normalizeUrl(ref.linkedin),
+    };
+    delete payload._clientKey;
+
     await withLoading(
       async () => {
         try {
@@ -150,7 +180,7 @@ export default function ReferencesManagementPage() {
           const res = await fetch(url, {
             method,
             headers: authHeaders,
-            body: JSON.stringify(ref),
+            body: JSON.stringify(payload),
           });
           if (res.status === 401) {
             showToast("error", "Your session has expired. You are being logged out.");
@@ -159,16 +189,35 @@ export default function ReferencesManagementPage() {
             }
             return;
           }
-          if (!res.ok) throw new Error(await res.text());
+          if (!res.ok) {
+            const errJson = await res.json().catch(() => null);
+            const errDetail = errJson
+              ? Object.entries(errJson)
+                  .map(
+                    ([k, v]) =>
+                      `${k.charAt(0).toUpperCase() + k.slice(1)}: ${
+                        Array.isArray(v) ? v.join(", ") : v
+                      }`
+                  )
+                  .join(" | ")
+              : `Server error ${res.status}`;
+            throw new Error(errDetail);
+          }
           const saved: Reference = await res.json();
           setRefs((prev) => {
+            const targetIdx = prev.findIndex((r) =>
+              ref.id && r.id
+                ? r.id === ref.id
+                : (r._clientKey && r._clientKey === ref._clientKey) || r === ref
+            );
+            if (targetIdx === -1) return [saved, ...prev];
             const next = [...prev];
-            next[idx] = saved;
+            next[targetIdx] = saved;
             return next;
           });
           showToast("success", ref.id ? "Reference updated." : "Reference added.");
-        } catch {
-          showToast("error", "Failed to save reference.");
+        } catch (err: any) {
+          showToast("error", err?.message || "Failed to save reference.");
         } finally {
           setSaving(null);
         }
@@ -178,7 +227,7 @@ export default function ReferencesManagementPage() {
     );
   };
 
-  const handleToggleApproval = async (ref: Reference, idx: number) => {
+  const handleToggleApproval = async (ref: Reference) => {
     if (!ref.id) return;
     if (!token) return showToast("error", "Authentication required.");
     setToggling(ref.id);
@@ -199,8 +248,10 @@ export default function ReferencesManagementPage() {
           if (!res.ok) throw new Error(await res.text());
           const data = await res.json();
           setRefs((prev) => {
+            const targetIdx = prev.findIndex((r) => r.id === ref.id);
+            if (targetIdx === -1) return prev;
             const next = [...prev];
-            next[idx] = { ...next[idx], is_approved: data.is_approved };
+            next[targetIdx] = { ...next[targetIdx], is_approved: data.is_approved };
             return next;
           });
           showToast(
@@ -220,9 +271,13 @@ export default function ReferencesManagementPage() {
     );
   };
 
-  const handleDelete = async (ref: Reference, idx: number) => {
+  const handleDelete = async (ref: Reference) => {
     if (!ref.id) {
-      setRefs((prev) => prev.filter((_, i) => i !== idx));
+      setRefs((prev) =>
+        prev.filter((r) =>
+          ref._clientKey ? r._clientKey !== ref._clientKey : r !== ref
+        )
+      );
       return;
     }
     if (!token) return showToast("error", "Authentication required.");
@@ -242,7 +297,7 @@ export default function ReferencesManagementPage() {
             return;
           }
           if (!res.ok) throw new Error();
-          setRefs((prev) => prev.filter((_, i) => i !== idx));
+          setRefs((prev) => prev.filter((r) => r.id !== ref.id));
           showToast("success", "Reference deleted.");
         } catch {
           showToast("error", "Failed to delete reference.");
@@ -255,10 +310,16 @@ export default function ReferencesManagementPage() {
     );
   };
 
-  const updateField = (idx: number, field: keyof Reference, value: any) => {
+  const updateField = (ref: Reference, field: keyof Reference, value: any) => {
     setRefs((prev) => {
+      const targetIdx = prev.findIndex((r) =>
+        ref.id && r.id
+          ? r.id === ref.id
+          : (r._clientKey && r._clientKey === ref._clientKey) || r === ref
+      );
+      if (targetIdx === -1) return prev;
       const next = [...prev];
-      next[idx] = { ...next[idx], [field]: value };
+      next[targetIdx] = { ...next[targetIdx], [field]: value };
       return next;
     });
   };
@@ -470,7 +531,7 @@ export default function ReferencesManagementPage() {
       <div className="space-y-6">
         {filteredRefs.map((ref, idx) => (
           <motion.div
-            key={ref.id ?? `new-${idx}`}
+            key={ref.id ?? ref._clientKey ?? `new-${idx}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className={`rounded-2xl sm:rounded-3xl border p-4 sm:p-6 md:p-7 flex flex-col gap-5 shadow-sm transition-all ${
@@ -510,7 +571,7 @@ export default function ReferencesManagementPage() {
                 {/* 1-Click Approve / Unpublish Toggle */}
                 {ref.id && (
                   <button
-                    onClick={() => handleToggleApproval(ref, idx)}
+                    onClick={() => handleToggleApproval(ref)}
                     disabled={toggling === ref.id}
                     className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 min-h-[38px] sm:min-h-0 ${
                       ref.is_approved === false
@@ -536,7 +597,7 @@ export default function ReferencesManagementPage() {
 
                 {/* Delete */}
                 <button
-                  onClick={() => handleDelete(ref, idx)}
+                  onClick={() => handleDelete(ref)}
                   disabled={deleting === ref.id}
                   className="p-2 sm:p-1.5 rounded-xl sm:rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-40 cursor-pointer min-h-[38px] min-w-[38px] sm:min-h-0 sm:min-w-0 flex items-center justify-center border border-slate-200 sm:border-0 dark:border-white/[0.08]"
                   title="Delete Referee"
@@ -556,38 +617,38 @@ export default function ReferencesManagementPage() {
                 label="Full Name"
                 value={ref.name}
                 placeholder="e.g. Dr. Ahmed Hassan"
-                onChange={(v) => updateField(idx, "name", v)}
+                onChange={(v) => updateField(ref, "name", v)}
               />
               <Field
                 label="Job Title"
                 value={ref.title}
                 placeholder="e.g. Chief Technology Officer"
-                onChange={(v) => updateField(idx, "title", v)}
+                onChange={(v) => updateField(ref, "title", v)}
               />
               <Field
                 label="Company / Organisation"
                 value={ref.company}
                 placeholder="e.g. Jamia Mosque Committee"
-                onChange={(v) => updateField(idx, "company", v)}
+                onChange={(v) => updateField(ref, "company", v)}
               />
               <Field
                 label="Professional Relationship"
                 value={ref.relationship}
                 placeholder="e.g. Direct Supervisor / Lead Architect"
-                onChange={(v) => updateField(idx, "relationship", v)}
+                onChange={(v) => updateField(ref, "relationship", v)}
               />
               <Field
                 label="Email Address"
                 value={ref.email}
                 type="email"
                 placeholder="email@example.com"
-                onChange={(v) => updateField(idx, "email", v)}
+                onChange={(v) => updateField(ref, "email", v)}
               />
               <Field
                 label="Phone (optional)"
                 value={ref.phone}
                 placeholder="+254 7..."
-                onChange={(v) => updateField(idx, "phone", v)}
+                onChange={(v) => updateField(ref, "phone", v)}
               />
               <div className="md:col-span-2">
                 <Field
@@ -595,7 +656,7 @@ export default function ReferencesManagementPage() {
                   value={ref.linkedin}
                   type="url"
                   placeholder="https://linkedin.com/in/..."
-                  onChange={(v) => updateField(idx, "linkedin", v)}
+                  onChange={(v) => updateField(ref, "linkedin", v)}
                 />
               </div>
               <div className="md:col-span-2 flex flex-col gap-1.5">
@@ -605,7 +666,7 @@ export default function ReferencesManagementPage() {
                 <textarea
                   rows={3}
                   value={ref.quote}
-                  onChange={(e) => updateField(idx, "quote", e.target.value)}
+                  onChange={(e) => updateField(ref, "quote", e.target.value)}
                   placeholder="A testimonial detailing Khalfan's engineering competence and work ethic..."
                   className="px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/[0.08] bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-white text-base sm:text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-y"
                 />
@@ -620,11 +681,11 @@ export default function ReferencesManagementPage() {
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
-                  onClick={() => handleSave(ref, idx)}
-                  disabled={saving === (ref.id ?? "new")}
+                  onClick={() => handleSave(ref)}
+                  disabled={saving === (ref.id ?? ref._clientKey ?? "new")}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 cursor-pointer min-h-[42px] sm:min-h-0"
                 >
-                  {saving === (ref.id ?? "new") ? (
+                  {saving === (ref.id ?? ref._clientKey ?? "new") ? (
                     <>
                       <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving...
                     </>
