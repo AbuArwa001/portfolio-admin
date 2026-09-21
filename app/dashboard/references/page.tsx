@@ -132,12 +132,17 @@ export default function ReferencesManagementPage() {
   };
 
   useEffect(() => {
-    fetch(API)
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    fetch(API, { headers })
       .then((r) => r.json())
       .then((data) => setRefs(Array.isArray(data) ? data : []))
       .catch(() => showToast("error", "Failed to load references from DRF API."))
       .finally(() => setLoading(false));
-  }, [API]);
+  }, [API, token]);
 
   const { withLoading } = useCrudLoading();
 

@@ -14,6 +14,9 @@ export function getApiUrl(): string {
   if (!url.startsWith("http://") && !url.startsWith("https://")) {
     url = `https://${url}`;
   }
+  if (url.includes("localhost:8000")) {
+    url = url.replace("localhost:8000", "127.0.0.1:8000");
+  }
   return url.replace(/\/+$/, "");
 }
 

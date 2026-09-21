@@ -55,7 +55,9 @@ export default function DashboardOverviewPage() {
       try {
         const [projRes, refRes, certRes, blogRes, skillRes] = await Promise.allSettled([
           fetch(`${apiUrl}/api/v1/projects/`),
-          fetch(`${apiUrl}/api/v1/references/`),
+          fetch(`${apiUrl}/api/v1/references/`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          }),
           fetch(`${apiUrl}/api/v1/certifications/`),
           fetch(`${apiUrl}/api/v1/blog/`),
           fetch(`${apiUrl}/api/v1/auth/profile/skills/`, {
