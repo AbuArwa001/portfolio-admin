@@ -181,6 +181,27 @@ body {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+/* Autofill Aesthetics Override */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #0f172a !important;
+  -webkit-box-shadow: 0 0 0 1000px rgba(248, 250, 252, 0.95) inset !important;
+  box-shadow: 0 0 0 1000px rgba(248, 250, 252, 0.95) inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover, 
+.dark input:-webkit-autofill:focus, 
+.dark input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0 1000px rgba(12, 17, 29, 0.95) inset !important;
+  box-shadow: 0 0 0 1000px rgba(12, 17, 29, 0.95) inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 /* Luxury Grid Background */
 .bg-grid-mesh {
   background-image: 

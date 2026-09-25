@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "next-themes";
 import {
   Lock,
   Mail,
@@ -11,25 +12,34 @@ import {
   EyeOff,
   ShieldCheck,
   ArrowRight,
-  Sparkles,
   Server,
   Database,
   Cpu,
-  Globe,
   Zap,
   CheckCircle2,
   ExternalLink,
   KeyRound,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 export default function SignInPage() {
   const router = useRouter();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [autofilled, setAutofilled] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const currentTheme = mounted ? (theme === "system" ? resolvedTheme : theme) : "dark";
+  const isDark = currentTheme === "dark";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,17 +73,40 @@ export default function SignInPage() {
   };
 
   const systemStatusItems = [
-    { label: "DRF API Engine", val: "v3.15 Operational", icon: Server, color: "text-emerald-400" },
-    { label: "Neon PostgreSQL", val: "SSL Secured Pool", icon: Database, color: "text-blue-400" },
-    { label: "JWT Auth Layer", val: "Stateless Rotation", icon: Lock, color: "text-purple-400" },
-    { label: "Edge Gateway", val: "Vercel / Cloudflare", icon: Cpu, color: "text-amber-400" },
+    { label: "DRF API Engine", val: "v3.15 Operational", icon: Server, color: "text-emerald-500 dark:text-emerald-400" },
+    { label: "Neon PostgreSQL", val: "SSL Secured Pool", icon: Database, color: "text-blue-500 dark:text-blue-400" },
+    { label: "JWT Auth Layer", val: "Stateless Rotation", icon: Lock, color: "text-purple-500 dark:text-purple-400" },
+    { label: "Edge Gateway", val: "Vercel / Cloudflare", icon: Cpu, color: "text-amber-500 dark:text-amber-400" },
   ];
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-foreground flex items-center justify-center p-4 sm:p-6 lg:p-12 relative overflow-hidden bg-grid-mesh selection:bg-primary/30">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-foreground flex items-center justify-center p-4 sm:p-6 lg:p-12 relative overflow-hidden bg-grid-mesh selection:bg-primary/30 transition-colors duration-200">
+      {/* Top Bar Utilities: Theme Toggle */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setTheme(isDark ? "light" : "dark")}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] backdrop-blur-md hover:bg-slate-100 dark:hover:bg-white/[0.08] text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm cursor-pointer"
+          title={`Switch to ${isDark ? "light" : "dark"} mode`}
+          aria-label="Toggle theme"
+        >
+          {mounted && isDark ? (
+            <>
+              <Sun className="h-4 w-4 text-amber-400" />
+              <span className="hidden sm:inline">Light Mode</span>
+            </>
+          ) : (
+            <>
+              <Moon className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+              <span className="hidden sm:inline">Dark Mode</span>
+            </>
+          )}
+        </button>
+      </div>
+
       {/* Dynamic Ambient Background Glows */}
-      <div className="fixed top-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-600/15 rounded-full blur-[140px] pointer-events-none -z-10 animate-pulse" />
-      <div className="fixed bottom-[-10%] right-[-10%] w-[700px] h-[700px] bg-indigo-600/15 rounded-full blur-[160px] pointer-events-none -z-10" />
+      <div className="fixed top-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-500/10 dark:bg-blue-600/15 rounded-full blur-[140px] pointer-events-none -z-10 animate-pulse" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[700px] h-[700px] bg-indigo-500/10 dark:bg-indigo-600/15 rounded-full blur-[160px] pointer-events-none -z-10" />
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] bg-primary/5 rounded-full blur-[180px] pointer-events-none -z-10" />
 
       {/* Main Responsive Cockpit Container */}
@@ -83,37 +116,37 @@ export default function SignInPage() {
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center"
       >
-        {/* Left Column: Architectural Showcase Deck (Hidden on small mobile, visible on tablet/desktop) */}
+        {/* Left Column: Architectural Showcase Deck */}
         <div className="lg:col-span-7 flex flex-col justify-between space-y-8">
           <div>
             {/* Brand Emblem */}
-            <div className="inline-flex items-center gap-3 px-3.5 py-1.5 rounded-2xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-md mb-6 shadow-inner">
+            <div className="inline-flex items-center gap-3 px-3.5 py-1.5 rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-md mb-6 shadow-sm dark:shadow-inner">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-primary flex items-center justify-center text-white font-black text-xs shadow-[0_0_20px_rgba(59,130,246,0.5)]">
                 KA
               </div>
               <div className="flex flex-col">
-                <span className="text-xs font-bold tracking-wider text-foreground uppercase font-heading">
+                <span className="text-xs font-bold tracking-wider text-slate-900 dark:text-white uppercase font-heading">
                   Khalfan Athman
                 </span>
-                <span className="text-[10px] text-muted-foreground font-mono">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
                   Lead Systems Architect & Engineer
                 </span>
               </div>
-              <div className="ml-2 pl-2 border-l border-white/10 flex items-center gap-1.5 text-[10px] font-mono text-emerald-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              <div className="ml-2 pl-2 border-l border-slate-200 dark:border-white/10 flex items-center gap-1.5 text-[10px] font-mono text-emerald-600 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
                 Live Node
               </div>
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight font-heading text-white leading-[1.15]">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight font-heading text-slate-900 dark:text-white leading-[1.15]">
               Executive Portfolio{" "}
-              <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-primary bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-primary dark:from-blue-400 dark:via-indigo-300 dark:to-primary bg-clip-text text-transparent">
                 Control Center
               </span>
             </h1>
 
-            <p className="text-sm sm:text-base text-slate-400 mt-4 max-w-xl leading-relaxed">
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-4 max-w-xl leading-relaxed">
               Unified administrative command deck for managing live showcase projects, verified credentials, 
               client testimonials, and real-time backend telemetry across decoupled Next.js & DRF infrastructure.
             </p>
@@ -130,13 +163,13 @@ export default function SignInPage() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <Icon className={`h-4 w-4 ${item.color}`} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                   </div>
                   <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       {item.label}
                     </div>
-                    <div className="text-xs font-bold text-slate-200 mt-0.5 font-mono truncate">
+                    <div className="text-xs font-bold text-slate-900 dark:text-slate-200 mt-0.5 font-mono truncate">
                       {item.val}
                     </div>
                   </div>
@@ -146,21 +179,21 @@ export default function SignInPage() {
           </div>
 
           {/* Architecture Highlights Pill Row */}
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-300">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.06] bg-white/80 dark:bg-white/[0.02] backdrop-blur-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-sm">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
+              <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400">
                 <ShieldCheck className="h-4 w-4" />
               </div>
               <div>
-                <span className="font-semibold text-white">Stateless Security Protocol</span>
-                <p className="text-[11px] text-slate-400">256-bit JWT authentication with automated token refresh</p>
+                <span className="font-semibold text-slate-900 dark:text-white">Stateless Security Protocol</span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">256-bit JWT authentication with automated token refresh</p>
               </div>
             </div>
             <a
               href="https://khalfanathman.dev"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-primary hover:text-blue-700 dark:hover:text-primary/80 font-medium transition-colors"
             >
               Public Portfolio <ExternalLink className="h-3 w-3" />
             </a>
@@ -169,18 +202,18 @@ export default function SignInPage() {
 
         {/* Right Column: High-End Sign-In Deck */}
         <div className="lg:col-span-5 w-full">
-          <div className="glass-panel rounded-3xl p-7 sm:p-9 relative overflow-hidden shadow-2xl border border-white/[0.08]">
+          <div className="glass-panel rounded-3xl p-7 sm:p-9 relative overflow-hidden shadow-2xl border border-slate-200/80 dark:border-white/[0.08]">
             {/* Header / Security Badge */}
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200/80 dark:border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-primary/10 border border-primary/20 text-primary">
+                <div className="p-2 rounded-xl bg-blue-50 dark:bg-primary/10 border border-blue-200 dark:border-primary/20 text-blue-600 dark:text-primary">
                   <KeyRound className="h-4 w-4" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-white font-heading">
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white font-heading">
                     Admin Sign-In
                   </h2>
-                  <p className="text-[11px] text-slate-400">Access master dashboard</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Access master dashboard</p>
                 </div>
               </div>
 
@@ -188,10 +221,10 @@ export default function SignInPage() {
               <button
                 type="button"
                 onClick={handleQuickFill}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-[11px] font-semibold text-blue-300 transition-all cursor-pointer shadow-sm group"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100/80 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 text-[11px] font-semibold text-blue-700 dark:text-blue-300 transition-all cursor-pointer shadow-sm group"
                 title="Click to automatically fill master administrator credentials"
               >
-                <Zap className="h-3 w-3 text-amber-400 group-hover:scale-110 transition-transform" />
+                <Zap className="h-3 w-3 text-amber-500 dark:text-amber-400 group-hover:scale-110 transition-transform" />
                 <span>{autofilled ? "Filled!" : "Autofill Admin"}</span>
               </button>
             </div>
@@ -202,13 +235,13 @@ export default function SignInPage() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="email"
-                  className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center justify-between"
+                  className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between"
                 >
                   <span>Username or Email</span>
-                  <span className="text-[10px] text-slate-400 font-normal">admin or email</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">admin or email</span>
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-400" />
                   <input
                     id="email"
                     type="text"
@@ -217,7 +250,7 @@ export default function SignInPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="khalfan@khalfanathman.dev"
                     required
-                    className="w-full pl-10 pr-4 py-3 rounded-xl glass-input text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl glass-input text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono"
                   />
                 </div>
               </div>
@@ -226,13 +259,13 @@ export default function SignInPage() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="password"
-                  className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center justify-between"
+                  className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between"
                 >
                   <span>Password</span>
-                  <span className="text-[10px] text-slate-400 font-normal">Encrypted</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">Encrypted</span>
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-400" />
                   <input
                     id="password"
                     type={showPass ? "text" : "password"}
@@ -241,12 +274,12 @@ export default function SignInPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••••••"
                     required
-                    className="w-full pl-10 pr-12 py-3 rounded-xl glass-input text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono"
+                    className="w-full pl-10 pr-12 py-3 rounded-xl glass-input text-slate-900 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPass(!showPass)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-1"
                     aria-label={showPass ? "Hide password" : "Show password"}
                   >
                     {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -261,9 +294,9 @@ export default function SignInPage() {
                     initial={{ opacity: 0, height: 0, y: -6 }}
                     animate={{ opacity: 1, height: "auto", y: 0 }}
                     exit={{ opacity: 0, height: 0, y: -6 }}
-                    className="text-xs font-medium text-red-300 bg-red-500/10 border border-red-500/25 rounded-xl p-3 flex items-center gap-2.5 overflow-hidden"
+                    className="text-xs font-medium text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/25 rounded-xl p-3 flex items-center gap-2.5 overflow-hidden"
                   >
-                    <span className="w-2 h-2 rounded-full bg-red-400 animate-ping flex-shrink-0" />
+                    <span className="w-2 h-2 rounded-full bg-red-500 dark:bg-red-400 animate-ping flex-shrink-0" />
                     <span>{error}</span>
                   </motion.div>
                 )}
@@ -273,7 +306,7 @@ export default function SignInPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="relative overflow-hidden group w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-primary text-white font-semibold text-sm hover:from-blue-500 hover:to-indigo-500 transition-all shadow-[0_0_30px_rgba(59,130,246,0.4)] disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
+                className="relative overflow-hidden group w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-primary text-white font-semibold text-sm hover:from-blue-500 hover:to-indigo-500 transition-all shadow-md hover:shadow-lg dark:shadow-[0_0_30px_rgba(59,130,246,0.4)] disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
               >
                 {/* Shimmer light overlay */}
                 <span className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
@@ -291,16 +324,16 @@ export default function SignInPage() {
             </form>
 
             {/* Bottom Status Footer */}
-            <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+            <div className="mt-6 pt-4 border-t border-slate-200/80 dark:border-white/[0.06] flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                 TLS 1.3 Verified
               </span>
               <a
                 href={process.env.NEXT_PUBLIC_PORTFOLIO_URL || "https://khalfanathman.dev"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-slate-400 hover:text-white transition-colors flex items-center gap-1"
+                className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors flex items-center gap-1"
               >
                 <span>Live Site</span>
                 <ArrowRight className="h-3 w-3" />
