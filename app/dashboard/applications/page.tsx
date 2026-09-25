@@ -28,19 +28,28 @@ import {
   Sparkles,
   X,
   FileCheck,
+  LayoutGrid,
+  ListFilter,
+  Check,
 } from "lucide-react";
 import { getApiUrl } from "@/lib/config";
 
 interface JobApplication {
   id?: number;
   company: string;
+  organization?: string;
   role: string;
+  job_title?: string;
+  advert_ref?: string;
+  key_responsibilities?: string;
+  job_requirements: string;
   status: string;
+  shortlisted?: boolean;
+  closing_date?: string | null;
+  date_applied: string | null;
   link: string;
   done: boolean;
   google_search_link: string;
-  job_requirements: string;
-  date_applied: string | null;
   take_by: string;
   oa: boolean;
   phone_screen: boolean;
@@ -89,6 +98,7 @@ export default function ApplicationsPage() {
   const [loading, setLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("All");
+  const [viewMode, setViewMode] = React.useState<"detailed" | "pipeline">("detailed");
   const [notification, setNotification] = React.useState<{ text: string; type: "success" | "error" } | null>(null);
 
   // Single Role Modal / Form state
@@ -98,17 +108,22 @@ export default function ApplicationsPage() {
   const [formData, setFormData] = React.useState<JobApplication>({
     company: "",
     role: "",
+    advert_ref: "",
+    key_responsibilities: "",
+    job_requirements: "",
     status: "Applied",
+    shortlisted: false,
+    closing_date: "",
+    date_applied: new Date().toISOString().split("T")[0],
     link: "",
     done: false,
     google_search_link: "",
-    job_requirements: "",
-    date_applied: new Date().toISOString().split("T")[0],
     take_by: "",
     oa: false,
     phone_screen: false,
     interview: false,
     interview_done: false,
+    notes: "",
   });
 
   // Batch Import Spreadsheet State
@@ -150,12 +165,23 @@ export default function ApplicationsPage() {
     fetchApplications();
   }, [fetchApplications]);
 
-  // Handle Quick Inline Toggle (Done, OA, Phone Screen, Interview, Interview Done)
+  // Handle Quick Inline Toggle
   const handleToggleField = async (app: JobApplication, field: keyof JobApplication) => {
     if (!app.id) return;
     const updatedVal = !app[field];
+    const updatePayload: Record<string, any> = { [field]: updatedVal };
+
+    // When toggling shortlisted, keep interview and status in sync
+    if (field === "shortlisted" || field === "interview") {
+      updatePayload.shortlisted = updatedVal;
+      updatePayload.interview = updatedVal;
+      if (updatedVal && app.status === "Applied") {
+        updatePayload.status = "Interviewing";
+      }
+    }
+
     const updatedList = applications.map((item) =>
-      item.id === app.id ? { ...item, [field]: updatedVal } : item
+      item.id === app.id ? { ...item, ...updatePayload } : item
     );
     setApplications(updatedList);
 
@@ -167,7 +193,7 @@ export default function ApplicationsPage() {
       await fetch(`${apiUrl}/api/v1/applications/${app.id}/`, {
         method: "PATCH",
         headers,
-        body: JSON.stringify({ [field]: updatedVal }),
+        body: JSON.stringify(updatePayload),
       });
       showToast(`Updated ${String(field)} for ${app.company}`);
     } catch (err) {
@@ -181,7 +207,7 @@ export default function ApplicationsPage() {
   const handleSaveApplication = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.company || !formData.role) {
-      showToast("Company and Role are required", "error");
+      showToast("Organization / Company and Role Title are required", "error");
       return;
     }
 
@@ -192,6 +218,12 @@ export default function ApplicationsPage() {
         headers["Authorization"] = `Bearer ${session.accessToken}`;
       }
 
+      const payload = {
+        ...formData,
+        interview: Boolean(formData.shortlisted || formData.interview),
+        shortlisted: Boolean(formData.shortlisted || formData.interview),
+      };
+
       const url = editingId
         ? `${apiUrl}/api/v1/applications/${editingId}/`
         : `${apiUrl}/api/v1/applications/`;
@@ -200,7 +232,7 @@ export default function ApplicationsPage() {
       const res = await fetch(url, {
         method,
         headers,
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -243,7 +275,26 @@ export default function ApplicationsPage() {
 
   const openEditModal = (app: JobApplication) => {
     setEditingId(app.id || null);
-    setFormData({ ...app });
+    setFormData({
+      company: app.company || "",
+      role: app.role || "",
+      advert_ref: app.advert_ref || "",
+      key_responsibilities: app.key_responsibilities || "",
+      job_requirements: app.job_requirements || "",
+      status: app.status || "Applied",
+      shortlisted: Boolean(app.shortlisted || app.interview),
+      closing_date: app.closing_date || "",
+      date_applied: app.date_applied || new Date().toISOString().split("T")[0],
+      link: app.link || "",
+      done: Boolean(app.done),
+      google_search_link: app.google_search_link || "",
+      take_by: app.take_by || "",
+      oa: Boolean(app.oa),
+      phone_screen: Boolean(app.phone_screen),
+      interview: Boolean(app.interview || app.shortlisted),
+      interview_done: Boolean(app.interview_done),
+      notes: app.notes || "",
+    });
     setShowModal(true);
   };
 
@@ -251,17 +302,22 @@ export default function ApplicationsPage() {
     setFormData({
       company: "",
       role: "",
+      advert_ref: "",
+      key_responsibilities: "",
+      job_requirements: "",
       status: "Applied",
+      shortlisted: false,
+      closing_date: "",
+      date_applied: new Date().toISOString().split("T")[0],
       link: "",
       done: false,
       google_search_link: "",
-      job_requirements: "",
-      date_applied: new Date().toISOString().split("T")[0],
       take_by: "",
       oa: false,
       phone_screen: false,
       interview: false,
       interview_done: false,
+      notes: "",
     });
   };
 
@@ -416,17 +472,21 @@ export default function ApplicationsPage() {
 
   // Filtered applications
   const filteredApps = applications.filter((app) => {
+    const q = searchQuery.toLowerCase();
     const matchesSearch =
-      app.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (app.job_requirements || "").toLowerCase().includes(searchQuery.toLowerCase());
+      app.company.toLowerCase().includes(q) ||
+      app.role.toLowerCase().includes(q) ||
+      (app.advert_ref || "").toLowerCase().includes(q) ||
+      (app.job_requirements || "").toLowerCase().includes(q) ||
+      (app.key_responsibilities || "").toLowerCase().includes(q) ||
+      (app.notes || "").toLowerCase().includes(q);
     const matchesStatus = statusFilter === "All" || app.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   // Telemetry metrics
   const totalTracked = applications.length;
-  const interviewingCount = applications.filter((a) => a.status === "Interviewing" || a.interview).length;
+  const interviewingCount = applications.filter((a) => a.status === "Interviewing" || a.interview || a.shortlisted).length;
   const appliedCount = applications.filter((a) => a.status === "Applied").length;
   const offersCount = applications.filter((a) => a.status === "Offer").length;
 
@@ -455,17 +515,17 @@ export default function ApplicationsPage() {
         <div>
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center gap-1">
-              <FileSpreadsheet className="h-3 w-3" /> Tracking Telemetry
+              <FileSpreadsheet className="h-3 w-3" /> Detailed Job Tracker Architecture
             </span>
             <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-              Template: Applied Roles & Detailed Job Tracker
+              Format: Complete Job Application Tracker
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight mt-1">
             Applied Roles Tracker
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-            Monitor pipeline milestones, assessments, interview stages, and import/export formatted spreadsheets.
+            Manage organization submissions, advert refs, candidate requirements, shortlist status, and dual-sheet Excel exports.
           </p>
         </div>
 
@@ -478,7 +538,7 @@ export default function ApplicationsPage() {
               setShowImportModal(true);
             }}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
-            title="Import Excel or CSV spreadsheet"
+            title="Import Excel (.xlsx) or CSV spreadsheet"
           >
             <UploadCloud className="h-3.5 w-3.5" />
             <span>Import Spreadsheet</span>
@@ -488,11 +548,10 @@ export default function ApplicationsPage() {
           <button
             onClick={handleExportExcel}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
-            title="Download full tracker as formatted Excel sheet"
+            title="Download Complete_Job_Application_Tracker.xlsx"
           >
             <Download className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Export Excel</span>
-            <span className="sm:hidden">Excel</span>
+            <span>Export Tracker (.xlsx)</span>
           </button>
 
           {/* Add Role Button */}
@@ -505,7 +564,7 @@ export default function ApplicationsPage() {
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20 transition-all cursor-pointer"
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>Add Role</span>
+            <span>Track New Role</span>
           </button>
         </div>
       </div>
@@ -517,7 +576,7 @@ export default function ApplicationsPage() {
           <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading mt-1">
             {totalTracked}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Active Pipeline Records</div>
+          <div className="text-[10px] text-slate-400 mt-1">Spreadsheet Job Records</div>
         </div>
 
         <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#0c1222]/80 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] shadow-sm">
@@ -525,15 +584,15 @@ export default function ApplicationsPage() {
           <div className="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 font-heading mt-1">
             {appliedCount}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Submitted Submissions</div>
+          <div className="text-[10px] text-slate-400 mt-1">Active Submissions</div>
         </div>
 
         <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#0c1222]/80 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] shadow-sm">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400">In Interview</div>
+          <div className="text-[11px] font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400">Shortlisted / Interview</div>
           <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 font-heading mt-1">
             {interviewingCount}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Active Rounds & Shortlists</div>
+          <div className="text-[10px] text-slate-400 mt-1">Shortlisted Opportunities</div>
         </div>
 
         <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#0c1222]/80 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] shadow-sm">
@@ -545,22 +604,48 @@ export default function ApplicationsPage() {
         </div>
       </div>
 
-      {/* Filter & Search Toolbar */}
-      <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#0c1222]/80 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+      {/* Filter & View Switcher Toolbar */}
+      <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#0c1222]/80 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] shadow-sm flex flex-col lg:flex-row items-center justify-between gap-3">
         {/* Search */}
-        <div className="relative w-full md:w-80">
+        <div className="relative w-full lg:w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search company, role or requirements..."
+            placeholder="Search organization, job title, advert ref, JD..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-blue-500"
           />
         </div>
 
+        {/* View Switcher: Detailed Job Tracker vs Pipeline Telemetry */}
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06]">
+          <button
+            type="button"
+            onClick={() => setViewMode("detailed")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              viewMode === "detailed"
+                ? "bg-white dark:bg-[#080d1a] text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            📋 Complete Tracker Format
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("pipeline")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              viewMode === "pipeline"
+                ? "bg-white dark:bg-[#080d1a] text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            ⚡ Pipeline & Telemetry View
+          </button>
+        </div>
+
         {/* Status Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto w-full lg:w-auto pb-1 lg:pb-0">
           {["All", "Applied", "Interviewing", "Offer", "Rejected", "Not yet Applied"].map((st) => (
             <button
               key={st}
@@ -577,46 +662,178 @@ export default function ApplicationsPage() {
         </div>
       </div>
 
-      {/* Spreadsheet Table */}
+      {/* Spreadsheet Table: Complete Job Application Tracker / Pipeline Mode */}
       <div className="rounded-2xl bg-white/80 dark:bg-[#0c1222]/80 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-100 dark:bg-[#080d1a] border-b border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 uppercase font-mono text-[10px] tracking-wider">
-              <tr>
-                <th className="p-3.5">Company & Role</th>
-                <th className="p-3.5">Status</th>
-                <th className="p-3.5">Date Applied</th>
-                <th className="p-3.5 text-center">OA</th>
-                <th className="p-3.5 text-center">Phone Screen</th>
-                <th className="p-3.5 text-center">Interview</th>
-                <th className="p-3.5 text-center">Done?</th>
-                <th className="p-3.5">Requirements / Notes</th>
-                <th className="p-3.5 text-right">Actions</th>
-              </tr>
-            </thead>
+            {viewMode === "detailed" ? (
+              // Detailed Job Tracker Header (Exact match with Complete_Job_Application_Tracker.xlsx)
+              <thead className="bg-slate-100 dark:bg-[#080d1a] border-b border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 uppercase font-mono text-[10px] tracking-wider">
+                <tr>
+                  <th className="p-3.5">Organization</th>
+                  <th className="p-3.5">Job Title</th>
+                  <th className="p-3.5">Advert Ref / Grade</th>
+                  <th className="p-3.5">Key Requirements & Certs</th>
+                  <th className="p-3.5">Key Responsibilities (JD)</th>
+                  <th className="p-3.5">Status</th>
+                  <th className="p-3.5 text-center">Shortlisted?</th>
+                  <th className="p-3.5">Closing Date</th>
+                  <th className="p-3.5">Notes</th>
+                  <th className="p-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+            ) : (
+              // Pipeline / Telemetry Header
+              <thead className="bg-slate-100 dark:bg-[#080d1a] border-b border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 uppercase font-mono text-[10px] tracking-wider">
+                <tr>
+                  <th className="p-3.5">Company & Role</th>
+                  <th className="p-3.5">Status</th>
+                  <th className="p-3.5">Date Applied</th>
+                  <th className="p-3.5 text-center">OA</th>
+                  <th className="p-3.5 text-center">Phone Screen</th>
+                  <th className="p-3.5 text-center">Interview</th>
+                  <th className="p-3.5 text-center">Done?</th>
+                  <th className="p-3.5">Requirements / Notes</th>
+                  <th className="p-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+            )}
+
             <tbody className="divide-y divide-slate-200 dark:divide-white/[0.06]">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400">
+                  <td colSpan={10} className="py-12 text-center text-slate-400">
                     <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2 text-primary" />
-                    Loading tracked applications...
+                    Loading applications...
                   </td>
                 </tr>
               ) : filteredApps.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400">
-                    No matching applications found. Click "Import Spreadsheet" or "Add Role" to begin tracking.
+                  <td colSpan={10} className="py-12 text-center text-slate-400">
+                    No matching applications found. Click "Import Spreadsheet" or "Track New Role" to get started.
                   </td>
                 </tr>
               ) : (
                 filteredApps.map((app) => {
                   const statusConf = STATUS_CONFIG[app.status] || STATUS_CONFIG["Applied"];
+                  const isShortlisted = Boolean(app.shortlisted || app.interview);
+
+                  if (viewMode === "detailed") {
+                    // Detailed Job Tracker Row
+                    return (
+                      <tr
+                        key={app.id}
+                        className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
+                      >
+                        {/* Organization */}
+                        <td className="p-3.5 font-bold text-slate-900 dark:text-white font-heading text-sm max-w-[200px]">
+                          {app.company}
+                          {app.link && (
+                            <a
+                              href={app.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block text-[11px] font-normal text-blue-600 dark:text-blue-400 hover:underline mt-0.5"
+                            >
+                              Portal Link ↗
+                            </a>
+                          )}
+                        </td>
+
+                        {/* Job Title */}
+                        <td className="p-3.5 font-semibold text-slate-800 dark:text-slate-200 max-w-[180px]">
+                          {app.role}
+                        </td>
+
+                        {/* Advert Ref / Grade */}
+                        <td className="p-3.5 font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                          {app.advert_ref || "—"}
+                        </td>
+
+                        {/* Key Requirements (Education & Certs) */}
+                        <td className="p-3.5 max-w-xs text-slate-600 dark:text-slate-400 text-[11px]">
+                          <div className="line-clamp-2" title={app.job_requirements}>
+                            {app.job_requirements || "—"}
+                          </div>
+                        </td>
+
+                        {/* Key Responsibilities (JD Summary) */}
+                        <td className="p-3.5 max-w-xs text-slate-600 dark:text-slate-400 text-[11px]">
+                          <div className="line-clamp-2" title={app.key_responsibilities}>
+                            {app.key_responsibilities || "—"}
+                          </div>
+                        </td>
+
+                        {/* Status */}
+                        <td className="p-3.5">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold font-mono border ${statusConf.bg} ${statusConf.color} ${statusConf.border}`}
+                          >
+                            {app.status}
+                          </span>
+                        </td>
+
+                        {/* Shortlisted? */}
+                        <td className="p-3.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleField(app, "shortlisted")}
+                            className="cursor-pointer"
+                            title="Toggle Shortlisted status"
+                          >
+                            {isShortlisted ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                                <Check className="h-3 w-3" /> YES
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium text-slate-400 border border-slate-300 dark:border-white/10">
+                                No
+                              </span>
+                            )}
+                          </button>
+                        </td>
+
+                        {/* Closing Date */}
+                        <td className="p-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                          {app.closing_date || app.date_applied || "N/A"}
+                        </td>
+
+                        {/* Notes */}
+                        <td className="p-3.5 max-w-xs text-slate-600 dark:text-slate-400 text-[11px]">
+                          <div className="line-clamp-2" title={app.notes}>
+                            {app.notes || "—"}
+                          </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="p-3.5 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => openEditModal(app)}
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-colors"
+                              title="Edit Record"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => app.id && handleDelete(app.id)}
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                              title="Delete Record"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  // Pipeline & Telemetry View Row
                   return (
                     <tr
                       key={app.id}
                       className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
                     >
-                      {/* Company & Role */}
                       <td className="p-3.5">
                         <div className="font-bold text-slate-900 dark:text-white font-heading text-sm">
                           {app.company}
@@ -624,19 +841,13 @@ export default function ApplicationsPage() {
                         <div className="text-slate-600 dark:text-slate-400 text-xs font-medium">
                           {app.role}
                         </div>
-                        {app.link && (
-                          <a
-                            href={app.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:underline mt-0.5"
-                          >
-                            <ExternalLink className="h-3 w-3" /> Job Link
-                          </a>
+                        {app.advert_ref && (
+                          <span className="text-[10px] font-mono text-slate-500">
+                            {app.advert_ref}
+                          </span>
                         )}
                       </td>
 
-                      {/* Status */}
                       <td className="p-3.5">
                         <span
                           className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold font-mono border ${statusConf.bg} ${statusConf.color} ${statusConf.border}`}
@@ -645,18 +856,15 @@ export default function ApplicationsPage() {
                         </span>
                       </td>
 
-                      {/* Date Applied */}
                       <td className="p-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">
                         {app.date_applied || "—"}
                       </td>
 
-                      {/* OA Checkbox */}
                       <td className="p-3.5 text-center">
                         <button
                           type="button"
                           onClick={() => handleToggleField(app, "oa")}
                           className="cursor-pointer"
-                          title="Toggle Online Assessment"
                         >
                           {app.oa ? (
                             <CheckSquare className="h-4 w-4 text-emerald-500 mx-auto" />
@@ -666,13 +874,11 @@ export default function ApplicationsPage() {
                         </button>
                       </td>
 
-                      {/* Phone Screen Checkbox */}
                       <td className="p-3.5 text-center">
                         <button
                           type="button"
                           onClick={() => handleToggleField(app, "phone_screen")}
                           className="cursor-pointer"
-                          title="Toggle Phone Screen"
                         >
                           {app.phone_screen ? (
                             <CheckSquare className="h-4 w-4 text-emerald-500 mx-auto" />
@@ -682,13 +888,11 @@ export default function ApplicationsPage() {
                         </button>
                       </td>
 
-                      {/* Interview Checkbox */}
                       <td className="p-3.5 text-center">
                         <button
                           type="button"
                           onClick={() => handleToggleField(app, "interview")}
                           className="cursor-pointer"
-                          title="Toggle Interview"
                         >
                           {app.interview ? (
                             <CheckSquare className="h-4 w-4 text-emerald-500 mx-auto" />
@@ -698,13 +902,11 @@ export default function ApplicationsPage() {
                         </button>
                       </td>
 
-                      {/* Done? Checkbox */}
                       <td className="p-3.5 text-center">
                         <button
                           type="button"
                           onClick={() => handleToggleField(app, "done")}
                           className="cursor-pointer"
-                          title="Toggle Done"
                         >
                           {app.done ? (
                             <CheckSquare className="h-4 w-4 text-blue-500 mx-auto" />
@@ -714,27 +916,23 @@ export default function ApplicationsPage() {
                         </button>
                       </td>
 
-                      {/* Requirements / Notes */}
                       <td className="p-3.5 max-w-xs text-slate-600 dark:text-slate-400 text-[11px]">
-                        <div className="line-clamp-2" title={app.job_requirements || app.notes || ""}>
-                          {app.job_requirements || app.notes || "No specific notes"}
+                        <div className="line-clamp-2">
+                          {app.job_requirements || app.notes || "—"}
                         </div>
                       </td>
 
-                      {/* Actions */}
-                      <td className="p-3.5 text-right">
+                      <td className="p-3.5 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => openEditModal(app)}
                             className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-colors"
-                            title="Edit Record"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => app.id && handleDelete(app.id)}
                             className="p-1.5 rounded-lg text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                            title="Delete Record"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -752,7 +950,7 @@ export default function ApplicationsPage() {
       {/* Modal: Batch Import Spreadsheet */}
       {showImportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-white/[0.1] rounded-3xl p-6 sm:p-8 max-w-4xl w-full shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto">
+          <div className="bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-white/[0.1] rounded-3xl p-6 sm:p-8 max-w-5xl w-full shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/[0.08]">
               <div className="flex items-center gap-2.5">
@@ -764,7 +962,7 @@ export default function ApplicationsPage() {
                     Import Spreadsheet & Auto-Populate
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Upload your Excel (.xlsx, .xls) or CSV file to parse fields and add multiple job records automatically.
+                    Supports <span className="font-semibold text-slate-700 dark:text-slate-300">Complete_Job_Application_Tracker.xlsx</span> and <span className="font-semibold text-slate-700 dark:text-slate-300">Applied_Roles.xlsx</span> formats.
                   </p>
                 </div>
               </div>
@@ -842,14 +1040,14 @@ export default function ApplicationsPage() {
                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                   {selectedFileName ? (
                     <span className="text-indigo-600 dark:text-indigo-400 font-mono font-bold">
-                      Selected: {selectedFileName}
+                      Loaded: {selectedFileName}
                     </span>
                   ) : (
-                    "Drag and drop your spreadsheet here, or click to browse"
+                    "Drag and drop Complete_Job_Application_Tracker (.xlsx) or CSV here, or click to browse"
                   )}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Supports .xlsx, .xls, .csv, and .json formats
+                  Supports Organization, Job Title, Advert Ref/Grade, Requirements, Responsibilities, Status, Shortlisted?, Closing Date, and Notes.
                 </p>
               </div>
             </div>
@@ -858,7 +1056,7 @@ export default function ApplicationsPage() {
             {parsing && (
               <div className="p-6 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center gap-2">
                 <RefreshCw className="h-6 w-6 animate-spin text-indigo-500" />
-                <span className="text-xs font-medium">Parsing and auto-mapping spreadsheet columns...</span>
+                <span className="text-xs font-medium">Auto-mapping Complete Tracker format columns...</span>
               </div>
             )}
 
@@ -896,21 +1094,23 @@ export default function ApplicationsPage() {
                       onChange={(e) => setSkipDuplicates(e.target.checked)}
                       className="rounded text-indigo-600"
                     />
-                    <span>Skip duplicates (match Company & Role)</span>
+                    <span>Skip duplicates (match Organization & Role)</span>
                   </label>
                 </div>
 
-                {/* Table of Parsed Records */}
+                {/* Table of Parsed Records (Complete Job Tracker Columns) */}
                 <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] max-h-72 overflow-y-auto overflow-x-auto text-xs">
                   <table className="w-full text-left">
                     <thead className="bg-slate-100 dark:bg-[#080d1a] border-b border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 uppercase font-mono text-[10px] tracking-wider sticky top-0 z-10">
                       <tr>
                         <th className="p-3 w-10 text-center">✓</th>
-                        <th className="p-3">Company & Role</th>
+                        <th className="p-3">Organization</th>
+                        <th className="p-3">Job Title</th>
+                        <th className="p-3">Advert Ref / Grade</th>
                         <th className="p-3">Status</th>
-                        <th className="p-3">Date Applied</th>
-                        <th className="p-3">Key Requirements & Notes</th>
-                        <th className="p-3 text-center">Interview</th>
+                        <th className="p-3 text-center">Shortlisted?</th>
+                        <th className="p-3">Closing Date</th>
+                        <th className="p-3">JD & Requirements</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-white/[0.06]">
@@ -934,13 +1134,14 @@ export default function ApplicationsPage() {
                                 <Square className="h-4 w-4 text-slate-400 mx-auto" />
                               )}
                             </td>
-                            <td className="p-3">
-                              <div className="font-bold text-slate-900 dark:text-white font-heading">
-                                {item.company}
-                              </div>
-                              <div className="text-slate-600 dark:text-slate-400 text-xs">
-                                {item.role}
-                              </div>
+                            <td className="p-3 font-bold text-slate-900 dark:text-white font-heading">
+                              {item.company}
+                            </td>
+                            <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">
+                              {item.role}
+                            </td>
+                            <td className="p-3 font-mono text-[11px] text-slate-600 dark:text-slate-400">
+                              {item.advert_ref || "—"}
                             </td>
                             <td className="p-3">
                               <span
@@ -949,22 +1150,22 @@ export default function ApplicationsPage() {
                                 {item.status}
                               </span>
                             </td>
-                            <td className="p-3 font-mono text-[11px] text-slate-600 dark:text-slate-400">
-                              {item.date_applied || "—"}
+                            <td className="p-3 text-center">
+                              {item.shortlisted || item.interview ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                                  YES
+                                </span>
+                              ) : (
+                                <span className="text-slate-400">No</span>
+                              )}
+                            </td>
+                            <td className="p-3 font-mono text-[11px] text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                              {item.closing_date || item.date_applied || "N/A"}
                             </td>
                             <td className="p-3 max-w-xs text-slate-600 dark:text-slate-400 text-[11px]">
                               <div className="line-clamp-2">
-                                {item.job_requirements || item.notes || "—"}
+                                {item.key_responsibilities || item.job_requirements || item.notes || "—"}
                               </div>
-                            </td>
-                            <td className="p-3 text-center">
-                              {item.interview ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                                  Shortlisted
-                                </span>
-                              ) : (
-                                <span className="text-slate-400">—</span>
-                              )}
                             </td>
                           </tr>
                         );
@@ -1015,14 +1216,19 @@ export default function ApplicationsPage() {
         </div>
       )}
 
-      {/* Modal: Add or Edit Single Application */}
+      {/* Modal: Add or Edit Single Application (Full Complete Tracker Format) */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-white/[0.1] rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-white/[0.1] rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/[0.08]">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white font-heading">
-                {editingId ? "Edit Tracked Application" : "Track New Application"}
-              </h2>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white font-heading">
+                  {editingId ? "Edit Tracked Application" : "Track New Opportunity"}
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Fill fields matching the Complete Job Application Tracker format.
+                </p>
+              </div>
               <button
                 onClick={() => setShowModal(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
@@ -1032,40 +1238,53 @@ export default function ApplicationsPage() {
             </div>
 
             <form onSubmit={handleSaveApplication} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Company Name *
+                    Organization / Company *
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    placeholder="e.g. Google, AWS"
+                    placeholder="e.g. Kenya Space Agency (KSA)"
                     className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Role Title *
+                    Job Title / Role *
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    placeholder="e.g. Senior Cloud Engineer"
+                    placeholder="e.g. Software Engineer / ICT Officer"
                     className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
-                    Application Status
+                    Advert Ref / Grade
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.advert_ref}
+                    onChange={(e) => setFormData({ ...formData, advert_ref: e.target.value })}
+                    placeholder="e.g. 13/2026 | KSA 6"
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Status
                   </label>
                   <select
                     value={formData.status}
@@ -1078,6 +1297,59 @@ export default function ApplicationsPage() {
                     <option value="Rejected">Rejected</option>
                     <option value="Not yet Applied">Not yet Applied</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Closing Date / Deadline
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.closing_date || ""}
+                    onChange={(e) => setFormData({ ...formData, closing_date: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  Key Requirements (Education & Certs)
+                </label>
+                <textarea
+                  rows={2}
+                  value={formData.job_requirements}
+                  onChange={(e) => setFormData({ ...formData, job_requirements: e.target.value })}
+                  placeholder="Degree in CS/IT, Certifications (CCNA, AWS, PMP, ISACA)..."
+                  className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  Key Responsibilities (JD Summary)
+                </label>
+                <textarea
+                  rows={2}
+                  value={formData.key_responsibilities}
+                  onChange={(e) => setFormData({ ...formData, key_responsibilities: e.target.value })}
+                  placeholder="Network infrastructure maintenance, disaster recovery, system administration..."
+                  className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Job Link / Portal URL
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.link}
+                    onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                  />
                 </div>
 
                 <div>
@@ -1095,32 +1367,36 @@ export default function ApplicationsPage() {
 
               <div>
                 <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
-                  Job Link / Posting URL
-                </label>
-                <input
-                  type="url"
-                  value={formData.link}
-                  onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
-                  Job Requirements / Notes
+                  Notes & Terms (Salary, Contact Email, Instructions)
                 </label>
                 <textarea
-                  rows={3}
-                  value={formData.job_requirements}
-                  onChange={(e) => setFormData({ ...formData, job_requirements: e.target.value })}
-                  placeholder="Key stack, interviewers, recruiter notes..."
+                  rows={2}
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Terms (P&P), salary details, HR submission emails..."
                   className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
                 />
               </div>
 
-              {/* Checkboxes Row */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-200 dark:border-white/[0.08]">
+              {/* Status and Pipeline Checkboxes */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-slate-200 dark:border-white/[0.08]">
+                <label className="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.shortlisted}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        shortlisted: e.target.checked,
+                        interview: e.target.checked,
+                        status: e.target.checked && formData.status === "Applied" ? "Interviewing" : formData.status,
+                      })
+                    }
+                    className="rounded text-emerald-600"
+                  />
+                  <span>Shortlisted?</span>
+                </label>
+
                 <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
                   <input
                     type="checkbox"
@@ -1128,7 +1404,7 @@ export default function ApplicationsPage() {
                     onChange={(e) => setFormData({ ...formData, oa: e.target.checked })}
                     className="rounded text-blue-600"
                   />
-                  <span>OA Complete</span>
+                  <span>OA Passed</span>
                 </label>
 
                 <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
