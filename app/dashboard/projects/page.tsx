@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Trash2, Save, Loader2, CheckCircle2, AlertCircle,
   FolderKanban, ExternalLink, ImageIcon, X, Upload, Globe,
+  Edit2, Check, Sparkles, Layers, Tag,
 } from "lucide-react";
 import { getApiUrl } from "@/lib/config";
 import { useCrudLoading } from "@/components/crud-loading-context";
@@ -79,6 +80,471 @@ function SelectField({
           <option key={opt} value={opt} className="bg-white dark:bg-[#0c1222] text-slate-900 dark:text-white">{opt}</option>
         ))}
       </select>
+    </div>
+  );
+}
+
+// Technology & Company Slug Dictionary for SimpleIcons Logo Resolution
+const TECH_LOGO_MAP: Record<string, string> = {
+  // Web Frameworks & UI
+  "next.js": "nextdotjs",
+  "nextjs": "nextdotjs",
+  "next": "nextdotjs",
+  "react": "react",
+  "react.js": "react",
+  "react native": "react",
+  "vue": "vuedotjs",
+  "vue.js": "vuedotjs",
+  "vuejs": "vuedotjs",
+  "angular": "angular",
+  "svelte": "svelte",
+  "sveltekit": "svelte",
+  "nuxt": "nuxtdotjs",
+  "nuxtjs": "nuxtdotjs",
+  "astro": "astro",
+  "gatsby": "gatsby",
+  "remix": "remix",
+  "vite": "vite",
+  "webpack": "webpack",
+  "tailwind": "tailwindcss",
+  "tailwind css": "tailwindcss",
+  "tailwindcss": "tailwindcss",
+  "bootstrap": "bootstrap",
+  "sass": "sass",
+  "scss": "sass",
+  "css": "css3",
+  "css3": "css3",
+  "html": "html5",
+  "html5": "html5",
+  "shadcn": "shadcnui",
+  "shadcn/ui": "shadcnui",
+  "framer": "framer",
+  "framer motion": "framer",
+
+  // Languages & Runtimes
+  "typescript": "typescript",
+  "ts": "typescript",
+  "javascript": "javascript",
+  "js": "javascript",
+  "python": "python",
+  "node": "nodedotjs",
+  "node.js": "nodedotjs",
+  "nodejs": "nodedotjs",
+  "bun": "bun",
+  "deno": "deno",
+  "go": "go",
+  "golang": "go",
+  "rust": "rust",
+  "c++": "cplusplus",
+  "cpp": "cplusplus",
+  "c#": "csharp",
+  "csharp": "csharp",
+  "c": "c",
+  "java": "openjdk",
+  "kotlin": "kotlin",
+  "swift": "swift",
+  "dart": "dart",
+  "flutter": "flutter",
+  "php": "php",
+  "ruby": "ruby",
+  "rails": "rubyonrails",
+  "ruby on rails": "rubyonrails",
+  "scala": "scala",
+  "elixir": "elixir",
+  "bash": "gnubash",
+  "shell": "gnubash",
+
+  // Backend & APIs
+  "django": "django",
+  "django rest framework": "django",
+  "drf": "django",
+  "fastapi": "fastapi",
+  "flask": "flask",
+  "express": "express",
+  "express.js": "express",
+  "expressjs": "express",
+  "nestjs": "nestjs",
+  "spring": "springboot",
+  "spring boot": "springboot",
+  "laravel": "laravel",
+  "graphql": "graphql",
+  "apollo": "apollographql",
+  "trpc": "trpc",
+  "grpc": "grpc",
+  "socket.io": "socketdotio",
+  "rest api": "postman",
+
+  // Databases & ORMs
+  "postgresql": "postgresql",
+  "postgres": "postgresql",
+  "mysql": "mysql",
+  "sqlite": "sqlite",
+  "mongodb": "mongodb",
+  "mongo": "mongodb",
+  "redis": "redis",
+  "supabase": "supabase",
+  "firebase": "firebase",
+  "prisma": "prisma",
+  "drizzle": "drizzle",
+  "mariadb": "mariadb",
+  "neo4j": "neo4j",
+  "cassandra": "apachecassandra",
+  "elasticsearch": "elasticsearch",
+  "dynamodb": "amazondynamodb",
+
+  // Cloud & DevOps
+  "docker": "docker",
+  "kubernetes": "kubernetes",
+  "k8s": "kubernetes",
+  "aws": "amazonwebservices",
+  "amazon web services": "amazonwebservices",
+  "gcp": "googlecloud",
+  "google cloud": "googlecloud",
+  "azure": "microsoftazure",
+  "microsoft azure": "microsoftazure",
+  "vercel": "vercel",
+  "netlify": "netlify",
+  "heroku": "heroku",
+  "render": "render",
+  "digitalocean": "digitalocean",
+  "cloudflare": "cloudflare",
+  "nginx": "nginx",
+  "apache": "apache",
+  "terraform": "terraform",
+  "ansible": "ansible",
+  "linux": "linux",
+  "ubuntu": "ubuntu",
+  "debian": "debian",
+  "github": "github",
+  "git": "git",
+  "gitlab": "gitlab",
+  "github actions": "githubactions",
+  "jenkins": "jenkins",
+
+  // AI & Analytics
+  "openai": "openai",
+  "anthropic": "anthropic",
+  "gemini": "googlegemini",
+  "google gemini": "googlegemini",
+  "pytorch": "pytorch",
+  "tensorflow": "tensorflow",
+  "huggingface": "huggingface",
+  "hugging face": "huggingface",
+  "pandas": "pandas",
+  "numpy": "numpy",
+  "scikit-learn": "scikitlearn",
+  "opencv": "opencv",
+
+  // Tools & Design
+  "figma": "figma",
+  "postman": "postman",
+  "jira": "jira",
+  "stripe": "stripe",
+  "celery": "celery",
+  "rabbitmq": "rabbitmq",
+  "kafka": "apachekafka",
+};
+
+// Pure black monochrome icons that should invert on dark theme
+const DARK_INVERT_SLUGS = new Set([
+  "nextdotjs", "github", "vercel", "express", "socketdotio", "prisma", "shadcnui", "apple", "x"
+]);
+
+function getTechSlug(raw: string): string {
+  const trimmed = raw.trim().toLowerCase();
+  // Strip version suffixes like "Next.js 15" -> "next.js", "Python 3.12" -> "python"
+  const withoutVersion = trimmed.replace(/\s*v?\d+(\.\d+)*\s*$/i, "").trim();
+
+  if (TECH_LOGO_MAP[withoutVersion]) return TECH_LOGO_MAP[withoutVersion];
+  if (TECH_LOGO_MAP[trimmed]) return TECH_LOGO_MAP[trimmed];
+
+  // Try direct alphanumeric slug
+  const cleanSlug = withoutVersion.replace(/[^a-z0-9]/g, "");
+  return cleanSlug;
+}
+
+function TechLogo({ tech }: { tech: string }) {
+  const slug = getTechSlug(tech);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [tech, slug]);
+
+  const isInvert = DARK_INVERT_SLUGS.has(slug);
+
+  if (!slug || hasError) {
+    const initial = tech.trim().charAt(0).toUpperCase() || "#";
+    return (
+      <span className="w-3.5 h-3.5 rounded-[4px] bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold text-[9px] flex items-center justify-center font-mono flex-shrink-0">
+        {initial}
+      </span>
+    );
+  }
+
+  return (
+    <img
+      key={slug}
+      src={`https://cdn.simpleicons.org/${slug}`}
+      alt={tech}
+      loading="lazy"
+      onError={() => setHasError(true)}
+      className={`w-3.5 h-3.5 object-contain flex-shrink-0 transition-transform ${
+        isInvert ? "dark:brightness-0 dark:invert" : ""
+      }`}
+    />
+  );
+}
+
+const POPULAR_SUGGESTIONS = [
+  "Next.js", "TypeScript", "React", "Python", "Django",
+  "PostgreSQL", "Tailwind CSS", "Docker", "Redis", "GraphQL",
+  "AWS", "FastAPI", "Node.js", "MongoDB", "Supabase", "Git"
+];
+
+interface TechStackPillsEditorProps {
+  value: string;
+  onChange: (newValue: string) => void;
+}
+
+function TechStackPillsEditor({ value, onChange }: TechStackPillsEditorProps) {
+  const techList = value
+    ? value
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
+    : [];
+
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingValue, setEditingValue] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [newTech, setNewTech] = useState("");
+  const addInputRef = useRef<HTMLInputElement | null>(null);
+  const editInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (isAdding && addInputRef.current) {
+      addInputRef.current.focus();
+    }
+  }, [isAdding]);
+
+  useEffect(() => {
+    if (editingIndex !== null && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingIndex]);
+
+  const handleRemove = (index: number) => {
+    const next = techList.filter((_, i) => i !== index);
+    onChange(next.join(", "));
+  };
+
+  const handleStartEdit = (index: number) => {
+    setEditingIndex(index);
+    setEditingValue(techList[index]);
+  };
+
+  const handleSaveEdit = (index: number) => {
+    const trimmed = editingValue.trim();
+    if (trimmed) {
+      const next = [...techList];
+      next[index] = trimmed;
+      onChange(next.join(", "));
+    } else {
+      handleRemove(index);
+    }
+    setEditingIndex(null);
+  };
+
+  const handleAdd = () => {
+    const trimmed = newTech.trim();
+    if (trimmed) {
+      const additions = trimmed
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+      const next = [...techList, ...additions];
+      onChange(next.join(", "));
+    }
+    setNewTech("");
+    setIsAdding(false);
+  };
+
+  const handleAddSuggestion = (suggestion: string) => {
+    if (!techList.some((t) => t.toLowerCase() === suggestion.toLowerCase())) {
+      const next = [...techList, suggestion];
+      onChange(next.join(", "));
+    }
+  };
+
+  const availableSuggestions = POPULAR_SUGGESTIONS.filter(
+    (s) => !techList.some((t) => t.toLowerCase() === s.toLowerCase())
+  ).slice(0, 8);
+
+  return (
+    <div className="flex flex-col gap-2 pt-1">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+          <Layers className="h-3 w-3 text-blue-500" />
+          Interactive Tech Stack & Brand Logos
+        </span>
+        <span className="text-[10px] text-slate-400">
+          Click pill to edit • logos auto-resolve from company/tech
+        </span>
+      </div>
+
+      {/* Pills Container */}
+      <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-2xl bg-slate-100/70 dark:bg-[#070b14]/70 border border-slate-200/80 dark:border-white/[0.08] min-h-[42px]">
+        {techList.map((tech, ti) => {
+          const isEditing = editingIndex === ti;
+
+          if (isEditing) {
+            return (
+              <div
+                key={ti}
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-500 text-blue-700 dark:text-blue-300 text-xs shadow-sm"
+              >
+                <TechLogo tech={editingValue || tech} />
+                <input
+                  ref={editInputRef}
+                  type="text"
+                  value={editingValue}
+                  onChange={(e) => setEditingValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleSaveEdit(ti);
+                    } else if (e.key === "Escape") {
+                      setEditingIndex(null);
+                    }
+                  }}
+                  className="bg-transparent border-none text-xs font-mono font-medium focus:outline-none w-28 text-slate-900 dark:text-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleSaveEdit(ti)}
+                  className="p-0.5 rounded hover:bg-blue-500/20 text-blue-600 dark:text-blue-300 cursor-pointer"
+                  title="Save"
+                >
+                  <Check className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingIndex(null)}
+                  className="p-0.5 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-500 cursor-pointer"
+                  title="Cancel"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            );
+          }
+
+          return (
+            <div
+              key={ti}
+              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.1] hover:border-blue-500/50 dark:hover:border-blue-500/50 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 text-slate-800 dark:text-slate-200 text-[11px] font-mono font-medium transition-all shadow-sm"
+            >
+              <TechLogo tech={tech} />
+              <span
+                onClick={() => handleStartEdit(ti)}
+                className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 select-none"
+                title="Click to rename"
+              >
+                {tech}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleStartEdit(ti)}
+                className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-400 hover:text-blue-500 transition-opacity cursor-pointer"
+                title="Edit name"
+              >
+                <Edit2 className="h-2.5 w-2.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRemove(ti)}
+                className="opacity-60 group-hover:opacity-100 p-0.5 rounded-full hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400 text-slate-400 transition-all cursor-pointer"
+                title="Remove tech"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          );
+        })}
+
+        {/* Add Tech Input / Button */}
+        {isAdding ? (
+          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/40 text-xs">
+            {newTech.trim() && <TechLogo tech={newTech} />}
+            <input
+              ref={addInputRef}
+              type="text"
+              value={newTech}
+              placeholder="e.g. Docker, Redis, AWS..."
+              onChange={(e) => setNewTech(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") {
+                  e.preventDefault();
+                  handleAdd();
+                } else if (e.key === "Escape") {
+                  setIsAdding(false);
+                  setNewTech("");
+                }
+              }}
+              className="bg-transparent border-none text-xs font-mono font-medium focus:outline-none w-36 text-slate-900 dark:text-white placeholder:text-slate-400"
+            />
+            <button
+              type="button"
+              onClick={handleAdd}
+              disabled={!newTech.trim()}
+              className="p-0.5 rounded hover:bg-blue-500/20 text-blue-600 dark:text-blue-300 disabled:opacity-30 cursor-pointer"
+            >
+              <Check className="h-3 w-3" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAdding(false);
+                setNewTech("");
+              }}
+              className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-400 cursor-pointer"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsAdding(true)}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-dashed border-blue-500/40 bg-blue-500/5 hover:bg-blue-500/15 text-blue-600 dark:text-blue-400 text-[11px] font-mono font-semibold transition-all cursor-pointer"
+          >
+            <Plus className="h-3 w-3" />
+            <span>Add Tech</span>
+          </button>
+        )}
+      </div>
+
+      {/* Quick Suggestions */}
+      {availableSuggestions.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+          <span className="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1">
+            <Sparkles className="h-2.5 w-2.5 text-amber-500" /> Suggestions:
+          </span>
+          {availableSuggestions.map((sug) => (
+            <button
+              key={sug}
+              type="button"
+              onClick={() => handleAddSuggestion(sug)}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-200/50 dark:bg-white/[0.03] hover:bg-blue-500/10 hover:border-blue-500/30 border border-slate-300/60 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 transition-all cursor-pointer"
+            >
+              <TechLogo tech={sug} />
+              <span>+{sug}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -474,19 +940,11 @@ export default function ProjectsManagementPage() {
                 </div>
               </div>
 
-              {/* Tech Tags Preview */}
-              {proj.technologies && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {proj.technologies.split(",").map((t) => t.trim()).filter(Boolean).map((tech, ti) => (
-                    <span
-                      key={ti}
-                      className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 font-medium"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-              )}
+              {/* Interactive Editable Tech Pills with Auto Company/Tech Logos */}
+              <TechStackPillsEditor
+                value={proj.technologies}
+                onChange={(v) => updateField(idx, "technologies", v)}
+              />
 
               {/* Action */}
               <div className="flex justify-end pt-2">
