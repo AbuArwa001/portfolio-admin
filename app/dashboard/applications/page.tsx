@@ -23,6 +23,11 @@ import {
   Layers,
   ChevronRight,
   TrendingUp,
+  UploadCloud,
+  FileUp,
+  Sparkles,
+  X,
+  FileCheck,
 } from "lucide-react";
 import { getApiUrl } from "@/lib/config";
 
@@ -86,7 +91,7 @@ export default function ApplicationsPage() {
   const [statusFilter, setStatusFilter] = React.useState("All");
   const [notification, setNotification] = React.useState<{ text: string; type: "success" | "error" } | null>(null);
 
-  // Modal / Form state
+  // Single Role Modal / Form state
   const [showModal, setShowModal] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [editingId, setEditingId] = React.useState<number | null>(null);
@@ -105,6 +110,17 @@ export default function ApplicationsPage() {
     interview: false,
     interview_done: false,
   });
+
+  // Batch Import Spreadsheet State
+  const [showImportModal, setShowImportModal] = React.useState(false);
+  const [importing, setImporting] = React.useState(false);
+  const [parsing, setParsing] = React.useState(false);
+  const [previewItems, setPreviewItems] = React.useState<JobApplication[]>([]);
+  const [selectedIndices, setSelectedIndices] = React.useState<Set<number>>(new Set());
+  const [skipDuplicates, setSkipDuplicates] = React.useState(true);
+  const [selectedFileName, setSelectedFileName] = React.useState<string>("");
+  const [dragActive, setDragActive] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const apiUrl = getApiUrl();
 
@@ -220,7 +236,7 @@ export default function ApplicationsPage() {
         showToast("Application deleted");
         fetchApplications();
       }
-    } catch (err) {
+    } catch {
       showToast("Error deleting application", "error");
     }
   };
@@ -254,6 +270,150 @@ export default function ApplicationsPage() {
     window.open(`${apiUrl}/api/v1/applications/export-excel/`, "_blank");
   };
 
+  // Handle Drag & Drop / File Input Selection
+  const handleFileSelect = async (file: File) => {
+    setSelectedFileName(file.name);
+    setParsing(true);
+    setPreviewItems([]);
+
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("dry_run", "true");
+      form.append("skip_duplicates", String(skipDuplicates));
+
+      const headers: Record<string, string> = {};
+      if (session?.accessToken) {
+        headers["Authorization"] = `Bearer ${session.accessToken}`;
+      }
+
+      const res = await fetch(`${apiUrl}/api/v1/applications/import-file/?dry_run=true`, {
+        method: "POST",
+        headers,
+        body: form,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Failed to parse file (${res.status})`);
+      }
+
+      const data = await res.json();
+      const items = data.items || [];
+      setPreviewItems(items);
+      setSelectedIndices(new Set(items.map((_: any, idx: number) => idx)));
+      showToast(`Detected ${items.length} records ready for review`);
+    } catch (err: any) {
+      showToast(err.message || "Failed to parse spreadsheet file", "error");
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  // Quick Select Local/Server Template
+  const handleLoadServerTemplate = async (templateKey: string, label: string) => {
+    setSelectedFileName(label);
+    setParsing(true);
+    setPreviewItems([]);
+
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.accessToken) {
+        headers["Authorization"] = `Bearer ${session.accessToken}`;
+      }
+
+      const res = await fetch(`${apiUrl}/api/v1/applications/import-file/?dry_run=true`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          source_file: templateKey,
+          dry_run: true,
+          skip_duplicates: skipDuplicates,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to load template");
+      }
+
+      const data = await res.json();
+      const items = data.items || [];
+      setPreviewItems(items);
+      setSelectedIndices(new Set(items.map((_: any, idx: number) => idx)));
+      showToast(`Parsed ${items.length} roles from ${label}`);
+    } catch (err: any) {
+      showToast(err.message || "Failed to load template", "error");
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  // Toggle selection
+  const handleToggleSelectRow = (idx: number) => {
+    setSelectedIndices((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) {
+        next.delete(idx);
+      } else {
+        next.add(idx);
+      }
+      return next;
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedIndices.size === previewItems.length) {
+      setSelectedIndices(new Set());
+    } else {
+      setSelectedIndices(new Set(previewItems.map((_, idx) => idx)));
+    }
+  };
+
+  // Confirm Import
+  const handleConfirmImport = async () => {
+    const itemsToImport = previewItems.filter((_, idx) => selectedIndices.has(idx));
+    if (itemsToImport.length === 0) {
+      showToast("No records selected to import", "error");
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.accessToken) {
+        headers["Authorization"] = `Bearer ${session.accessToken}`;
+      }
+
+      const res = await fetch(`${apiUrl}/api/v1/applications/bulk-create/`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          applications: itemsToImport,
+          skip_duplicates: skipDuplicates,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Bulk import failed");
+      }
+
+      const data = await res.json();
+      showToast(
+        `Imported ${data.count || itemsToImport.length} applications! (${data.skipped_count || 0} existing skipped)`
+      );
+      setShowImportModal(false);
+      setPreviewItems([]);
+      setSelectedFileName("");
+      fetchApplications();
+    } catch (err: any) {
+      showToast(err.message || "Failed to complete import", "error");
+    } finally {
+      setImporting(false);
+    }
+  };
+
   // Filtered applications
   const filteredApps = applications.filter((app) => {
     const matchesSearch =
@@ -277,14 +437,14 @@ export default function ApplicationsPage() {
         <div
           className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-3 text-sm font-medium animate-in fade-in slide-in-from-bottom-5 duration-200 ${
             notification.type === "success"
-              ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300 backdrop-blur-xl"
-              : "bg-red-500/15 border-red-500/30 text-red-300 backdrop-blur-xl"
+              ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 backdrop-blur-xl"
+              : "bg-red-500/15 border-red-500/30 text-red-700 dark:text-red-300 backdrop-blur-xl"
           }`}
         >
           {notification.type === "success" ? (
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           ) : (
-            <AlertCircle className="h-4 w-4 text-red-400" />
+            <AlertCircle className="h-4 w-4 text-red-500" />
           )}
           <span>{notification.text}</span>
         </div>
@@ -294,37 +454,55 @@ export default function ApplicationsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/15 text-blue-500 border border-blue-500/30 flex items-center gap-1">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center gap-1">
               <FileSpreadsheet className="h-3 w-3" /> Tracking Telemetry
             </span>
-            <span className="text-[11px] font-mono text-slate-500">
-              Template: Applied Roles Spreadsheet
+            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+              Template: Applied Roles & Detailed Job Tracker
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight mt-1">
             Applied Roles Tracker
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-            Monitor pipeline milestones, assessments, interview stages, and download formatted Excel sheets.
+            Monitor pipeline milestones, assessments, interview stages, and import/export formatted spreadsheets.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Import Button */}
           <button
-            onClick={handleExportExcel}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition-all cursor-pointer"
+            onClick={() => {
+              setPreviewItems([]);
+              setSelectedFileName("");
+              setShowImportModal(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+            title="Import Excel or CSV spreadsheet"
           >
-            <Download className="h-3.5 w-3.5" />
-            <span>Download Excel (.xlsx)</span>
+            <UploadCloud className="h-3.5 w-3.5" />
+            <span>Import Spreadsheet</span>
           </button>
 
+          {/* Export Button */}
+          <button
+            onClick={handleExportExcel}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+            title="Download full tracker as formatted Excel sheet"
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Export Excel</span>
+            <span className="sm:hidden">Excel</span>
+          </button>
+
+          {/* Add Role Button */}
           <button
             onClick={() => {
               setEditingId(null);
               resetForm();
               setShowModal(true);
             }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/25 transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20 transition-all cursor-pointer"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Add Role</span>
@@ -335,15 +513,15 @@ export default function ApplicationsPage() {
       {/* Metric Telemetry Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#0c1222]/80 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] shadow-sm">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-slate-500">Total Tracked</div>
+          <div className="text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Tracked</div>
           <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading mt-1">
             {totalTracked}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Spreadsheet Records</div>
+          <div className="text-[10px] text-slate-400 mt-1">Active Pipeline Records</div>
         </div>
 
         <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#0c1222]/80 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] shadow-sm">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-blue-500">Applied</div>
+          <div className="text-[11px] font-mono uppercase tracking-wider text-blue-600 dark:text-blue-400">Applied</div>
           <div className="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 font-heading mt-1">
             {appliedCount}
           </div>
@@ -351,15 +529,15 @@ export default function ApplicationsPage() {
         </div>
 
         <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#0c1222]/80 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] shadow-sm">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-amber-500">In Interview</div>
+          <div className="text-[11px] font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400">In Interview</div>
           <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 font-heading mt-1">
             {interviewingCount}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Active Rounds</div>
+          <div className="text-[10px] text-slate-400 mt-1">Active Rounds & Shortlists</div>
         </div>
 
         <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#0c1222]/80 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] shadow-sm">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-emerald-500">Offers</div>
+          <div className="text-[11px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Offers</div>
           <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 font-heading mt-1">
             {offersCount}
           </div>
@@ -420,13 +598,14 @@ export default function ApplicationsPage() {
               {loading ? (
                 <tr>
                   <td colSpan={9} className="py-12 text-center text-slate-400">
-                    Loading spreadsheet records...
+                    <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2 text-primary" />
+                    Loading tracked applications...
                   </td>
                 </tr>
               ) : filteredApps.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-12 text-center text-slate-400">
-                    No matching applications found. Click "Add Role" to track your first opportunity.
+                    No matching applications found. Click "Import Spreadsheet" or "Add Role" to begin tracking.
                   </td>
                 </tr>
               ) : (
@@ -450,25 +629,24 @@ export default function ApplicationsPage() {
                             href={app.link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[10px] text-blue-500 hover:underline mt-0.5"
+                            className="inline-flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:underline mt-0.5"
                           >
-                            <span>Job Posting</span>
-                            <ExternalLink className="h-2.5 w-2.5" />
+                            <ExternalLink className="h-3 w-3" /> Job Link
                           </a>
                         )}
                       </td>
 
-                      {/* Status Badge */}
+                      {/* Status */}
                       <td className="p-3.5">
                         <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${statusConf.bg} ${statusConf.color} ${statusConf.border}`}
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold font-mono border ${statusConf.bg} ${statusConf.color} ${statusConf.border}`}
                         >
-                          {statusConf.label}
+                          {app.status}
                         </span>
                       </td>
 
                       {/* Date Applied */}
-                      <td className="p-3.5 font-mono text-slate-600 dark:text-slate-400 text-[11px]">
+                      <td className="p-3.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">
                         {app.date_applied || "—"}
                       </td>
 
@@ -537,8 +715,10 @@ export default function ApplicationsPage() {
                       </td>
 
                       {/* Requirements / Notes */}
-                      <td className="p-3.5 max-w-xs truncate text-slate-600 dark:text-slate-400 text-[11px]" title={app.job_requirements}>
-                        {app.job_requirements || "No specific notes"}
+                      <td className="p-3.5 max-w-xs text-slate-600 dark:text-slate-400 text-[11px]">
+                        <div className="line-clamp-2" title={app.job_requirements || app.notes || ""}>
+                          {app.job_requirements || app.notes || "No specific notes"}
+                        </div>
                       </td>
 
                       {/* Actions */}
@@ -569,9 +749,275 @@ export default function ApplicationsPage() {
         </div>
       </div>
 
-      {/* Modal: Add or Edit Application */}
+      {/* Modal: Batch Import Spreadsheet */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-white/[0.1] rounded-3xl p-6 sm:p-8 max-w-4xl w-full shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/[0.08]">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400">
+                  <UploadCloud className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white font-heading">
+                    Import Spreadsheet & Auto-Populate
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Upload your Excel (.xlsx, .xls) or CSV file to parse fields and add multiple job records automatically.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Quick Templates Bar */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-amber-500" />
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Quick-Load Local Tracker Spreadsheets:
+                </span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => handleLoadServerTemplate("complete_tracker", "Complete_Job_Application_Tracker.xlsx")}
+                  className="px-3 py-1.5 rounded-xl text-xs font-medium bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.1] text-slate-800 dark:text-white hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm cursor-pointer"
+                >
+                  ⚡ Complete_Job_Tracker.xlsx
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleLoadServerTemplate("applied_roles", "Applied Roles - Tracking Spreadsheet.xlsx")}
+                  className="px-3 py-1.5 rounded-xl text-xs font-medium bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.1] text-slate-800 dark:text-white hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm cursor-pointer"
+                >
+                  ⚡ Applied_Roles.xlsx
+                </button>
+              </div>
+            </div>
+
+            {/* Drag & Drop File Zone */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".xlsx,.xls,.csv,.tsv,.json"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  handleFileSelect(e.target.files[0]);
+                }
+              }}
+            />
+
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragActive(true);
+              }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragActive(false);
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                  handleFileSelect(e.dataTransfer.files[0]);
+                }
+              }}
+              onClick={() => fileInputRef.current?.click()}
+              className={`p-6 sm:p-8 rounded-2xl border-2 border-dashed transition-all cursor-pointer text-center flex flex-col items-center justify-center gap-2.5 ${
+                dragActive
+                  ? "border-indigo-500 bg-indigo-500/10 scale-[1.01]"
+                  : "border-slate-300 dark:border-white/[0.15] bg-slate-50/50 dark:bg-white/[0.01] hover:border-indigo-400 hover:bg-indigo-50/30 dark:hover:bg-indigo-500/5"
+              }`}
+            >
+              <div className="p-3 rounded-2xl bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">
+                <FileUp className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  {selectedFileName ? (
+                    <span className="text-indigo-600 dark:text-indigo-400 font-mono font-bold">
+                      Selected: {selectedFileName}
+                    </span>
+                  ) : (
+                    "Drag and drop your spreadsheet here, or click to browse"
+                  )}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Supports .xlsx, .xls, .csv, and .json formats
+                </p>
+              </div>
+            </div>
+
+            {/* Parsing State */}
+            {parsing && (
+              <div className="p-6 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center gap-2">
+                <RefreshCw className="h-6 w-6 animate-spin text-indigo-500" />
+                <span className="text-xs font-medium">Parsing and auto-mapping spreadsheet columns...</span>
+              </div>
+            )}
+
+            {/* Live Preview Section */}
+            {previewItems.length > 0 && (
+              <div className="space-y-3">
+                {/* Controls Bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08]">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleToggleSelectAll}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                    >
+                      {selectedIndices.size === previewItems.length ? (
+                        <CheckSquare className="h-4 w-4" />
+                      ) : (
+                        <Square className="h-4 w-4" />
+                      )}
+                      <span>
+                        {selectedIndices.size === previewItems.length
+                          ? "Deselect All"
+                          : `Select All (${previewItems.length})`}
+                      </span>
+                    </button>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      • {selectedIndices.size} of {previewItems.length} selected
+                    </span>
+                  </div>
+
+                  <label className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={skipDuplicates}
+                      onChange={(e) => setSkipDuplicates(e.target.checked)}
+                      className="rounded text-indigo-600"
+                    />
+                    <span>Skip duplicates (match Company & Role)</span>
+                  </label>
+                </div>
+
+                {/* Table of Parsed Records */}
+                <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] max-h-72 overflow-y-auto overflow-x-auto text-xs">
+                  <table className="w-full text-left">
+                    <thead className="bg-slate-100 dark:bg-[#080d1a] border-b border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 uppercase font-mono text-[10px] tracking-wider sticky top-0 z-10">
+                      <tr>
+                        <th className="p-3 w-10 text-center">✓</th>
+                        <th className="p-3">Company & Role</th>
+                        <th className="p-3">Status</th>
+                        <th className="p-3">Date Applied</th>
+                        <th className="p-3">Key Requirements & Notes</th>
+                        <th className="p-3 text-center">Interview</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 dark:divide-white/[0.06]">
+                      {previewItems.map((item, idx) => {
+                        const isSelected = selectedIndices.has(idx);
+                        const statusConf = STATUS_CONFIG[item.status] || STATUS_CONFIG["Applied"];
+                        return (
+                          <tr
+                            key={idx}
+                            onClick={() => handleToggleSelectRow(idx)}
+                            className={`cursor-pointer transition-colors ${
+                              isSelected
+                                ? "bg-indigo-50/40 dark:bg-indigo-500/10"
+                                : "hover:bg-slate-50 dark:hover:bg-white/[0.02]"
+                            }`}
+                          >
+                            <td className="p-3 text-center">
+                              {isSelected ? (
+                                <CheckSquare className="h-4 w-4 text-indigo-600 dark:text-indigo-400 mx-auto" />
+                              ) : (
+                                <Square className="h-4 w-4 text-slate-400 mx-auto" />
+                              )}
+                            </td>
+                            <td className="p-3">
+                              <div className="font-bold text-slate-900 dark:text-white font-heading">
+                                {item.company}
+                              </div>
+                              <div className="text-slate-600 dark:text-slate-400 text-xs">
+                                {item.role}
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono border ${statusConf.bg} ${statusConf.color} ${statusConf.border}`}
+                              >
+                                {item.status}
+                              </span>
+                            </td>
+                            <td className="p-3 font-mono text-[11px] text-slate-600 dark:text-slate-400">
+                              {item.date_applied || "—"}
+                            </td>
+                            <td className="p-3 max-w-xs text-slate-600 dark:text-slate-400 text-[11px]">
+                              <div className="line-clamp-2">
+                                {item.job_requirements || item.notes || "—"}
+                              </div>
+                            </td>
+                            <td className="p-3 text-center">
+                              {item.interview ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                                  Shortlisted
+                                </span>
+                              ) : (
+                                <span className="text-slate-400">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/[0.08]">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {previewItems.length > 0
+                  ? `${selectedIndices.size} of ${previewItems.length} records ready to import`
+                  : "Select a spreadsheet file to preview records"}
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowImportModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-white/[0.05] text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-white/[0.1] transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={importing || selectedIndices.size === 0}
+                  onClick={handleConfirmImport}
+                  className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {importing ? (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      <span>Importing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileCheck className="h-3.5 w-3.5" />
+                      <span>Import {selectedIndices.size} Applications</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Add or Edit Single Application */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-white/[0.1] rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/[0.08]">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white font-heading">
