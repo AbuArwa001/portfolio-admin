@@ -107,6 +107,7 @@ export interface Project {
   technologies: string;
   completion: string;
   link?: string | null;
+  github_link?: string | null;
   image?: string | null;
   user: number; // User ID
   user_details?: User; // Expanded user object
