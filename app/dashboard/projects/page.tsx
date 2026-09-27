@@ -777,14 +777,20 @@ function TechStackPillsEditor({ value, onChange, projectType = "" }: TechStackPi
 
 function getCategoryBadge(type: string) {
   const lower = (type || "").toLowerCase();
-  if (lower.includes("network")) {
+  if (
+    lower.includes("network") ||
+    lower.includes("packet tracer") ||
+    lower.includes("eve-ng") ||
+    lower.includes("gns3") ||
+    lower.includes("cisco")
+  ) {
     return {
       label: type,
       icon: <Network className="h-3 w-3 text-cyan-500" />,
       color: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/30",
     };
   }
-  if (lower.includes("aws") || lower.includes("cloud")) {
+  if (lower.includes("aws") || lower.includes("cloud") || lower.includes("solution architect")) {
     return {
       label: type,
       icon: <Cloud className="h-3 w-3 text-amber-500" />,
@@ -821,16 +827,22 @@ function getCategoryBadge(type: string) {
 
 function getFieldHelpers(type: string) {
   const lower = (type || "").toLowerCase();
-  if (lower.includes("network")) {
+  if (
+    lower.includes("network") ||
+    lower.includes("packet tracer") ||
+    lower.includes("eve-ng") ||
+    lower.includes("gns3") ||
+    lower.includes("cisco")
+  ) {
     return {
-      title: "e.g. Enterprise Multi-Branch Network (Packet Tracer / EVE-NG)",
+      title: "e.g. Enterprise Multi-Branch Network (Packet Tracer / EVE-NG / GNS3)",
       link: "Live web topology viewer or simulation demo URL",
-      github: "Packet Tracer (.pkt), EVE-NG configs, or GitHub repo URL",
+      github: "Packet Tracer (.pkt), EVE-NG configs, GNS3 repo, or GitHub URL",
       desc: "Describe network topology, routing protocols (BGP/OSPF), VLANs, failover (HSRP), and testing in Packet Tracer / EVE-NG / GNS3...",
       tech: "Cisco Packet Tracer, EVE-NG, GNS3, Wireshark, BGP, OSPF, VLANs, Cisco IOS",
     };
   }
-  if (lower.includes("aws") || lower.includes("cloud")) {
+  if (lower.includes("aws") || lower.includes("cloud") || lower.includes("solution architect")) {
     return {
       title: "e.g. AWS Multi-Tier High-Availability Architecture",
       link: "Live architecture diagram URL or hosted cloud demo",
@@ -1034,11 +1046,22 @@ export default function ProjectsManagementPage() {
         const lowerType = (proj.type || "").toLowerCase();
         let matchCat = true;
         if (selectedFilterCategory === "Network Engineering") {
-          matchCat = lowerType.includes("network");
+          matchCat =
+            lowerType.includes("network") ||
+            lowerType.includes("packet tracer") ||
+            lowerType.includes("eve-ng") ||
+            lowerType.includes("gns3") ||
+            lowerType.includes("cisco");
         } else if (selectedFilterCategory === "AWS Solutions Architect") {
-          matchCat = lowerType.includes("aws") || lowerType.includes("cloud");
+          matchCat =
+            lowerType.includes("aws") ||
+            lowerType.includes("cloud") ||
+            lowerType.includes("solution architect");
         } else if (selectedFilterCategory === "Mobile App") {
-          matchCat = lowerType.includes("mobile") || lowerType.includes("flutter") || lowerType.includes("android");
+          matchCat =
+            lowerType.includes("mobile") ||
+            lowerType.includes("flutter") ||
+            lowerType.includes("android");
         } else if (selectedFilterCategory !== "All") {
           matchCat = proj.type === selectedFilterCategory;
         }
