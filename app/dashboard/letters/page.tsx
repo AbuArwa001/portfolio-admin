@@ -317,26 +317,28 @@ Senior Software Engineer & Cloud Architect`;
       {/* ── Print-only CSS: hide all dashboard chrome, show only the letter canvas ── */}
       <style>{`
         @media print {
-          /* ── 1. Nuke the entire Next.js shell ── */
-          body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+          /* ── Step 1: make the whole page invisible ───────────────────
+             We use visibility:hidden (NOT display:none) because display:none
+             would break the flex/grid containers that Next.js needs to keep
+             in the DOM. Visibility just makes pixels disappear without
+             removing elements from layout.                              */
+          body * {
+            visibility: hidden !important;
+          }
 
-          /* Hide every direct child of body except our container */
-          body > *:not([data-print-root]) { display: none !important; }
+          /* ── Step 2: make ONLY the canvas (and its children) visible ─ */
+          [data-print-canvas],
+          [data-print-canvas] * {
+            visibility: visible !important;
+          }
 
-          /* The ancestor chain must be visible */
-          [data-print-root],
-          [data-print-root] > * { display: block !important; }
-
-          /* Hide everything INSIDE the root EXCEPT the canvas */
-          [data-print-root] [data-print-hide] { display: none !important; }
-
-          /* ── 2. Canvas: natural flow, NOT fixed ── */
-          /* Fixed/height:100% cuts the letter to one page.          */
-          /* Static + height:auto lets it flow across as many pages  */
-          /* as the content needs.                                    */
+          /* ── Step 3: pull canvas out of its container to page origin ─
+             position:absolute lets it escape the flex/grid context and
+             sit at the top-left corner of the printed page.            */
           [data-print-canvas] {
-            position: static !important;
-            display: block !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
             width: 100% !important;
             height: auto !important;
             min-height: unset !important;
@@ -352,10 +354,8 @@ Senior Software Engineer & Cloud Architect`;
             font-size: 11pt !important;
           }
 
-          /* ── 3. Textarea → static text ── */
+          /* ── Step 4: textarea renders as flowing text ────────────── */
           [data-print-canvas] textarea {
-            display: block !important;
-            width: 100% !important;
             height: auto !important;
             min-height: unset !important;
             overflow: visible !important;
@@ -373,7 +373,7 @@ Senior Software Engineer & Cloud Architect`;
             font-family: inherit !important;
           }
 
-          /* ── 4. Page settings ── */
+          /* ── Step 5: page size & colour accuracy ─────────────────── */
           @page {
             size: A4 portrait;
             margin: 0;
