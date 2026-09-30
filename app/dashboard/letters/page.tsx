@@ -95,15 +95,18 @@ export default function CoverLetterPage() {
   React.useEffect(() => {
     const fetchAvatar = async () => {
       try {
-        const res = await fetch(DEFAULT_PROFILE.avatarUrl);
-        const blob = await res.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (typeof reader.result === "string") setAvatarDataUrl(reader.result);
-        };
-        reader.readAsDataURL(blob);
-      } catch {
-        // fall back to original URL — print may still fail but screen is fine
+        // Use our server-side proxy so there are zero CORS/browser-security
+        // restrictions — the server fetches GitHub's CDN freely, converts
+        // the image to a base64 data: URL, and returns it to the client.
+        const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(DEFAULT_PROFILE.avatarUrl)}`;
+        const res = await fetch(proxyUrl);
+        if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
+        const { dataUrl } = await res.json();
+        if (dataUrl) setAvatarDataUrl(dataUrl);
+      } catch (err) {
+        console.warn("Avatar proxy failed, falling back to direct URL:", err);
+        // Direct URL works fine on screen; print will still have the black-box
+        // issue but that's better than showing nothing at all.
         setAvatarDataUrl(DEFAULT_PROFILE.avatarUrl);
       }
     };
