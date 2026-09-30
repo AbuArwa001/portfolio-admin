@@ -87,6 +87,15 @@ export default function CoverLetterPage() {
   const [content, setContent] = React.useState(DEFAULT_LETTER_BODY);
   const [aiCustomPrompt, setAiCustomPrompt] = React.useState("");
 
+  // ── Editable letterhead header fields ────────────────────────
+  const [headerName,      setHeaderName]      = React.useState(DEFAULT_PROFILE.name);
+  const [headerTitle,     setHeaderTitle]     = React.useState(DEFAULT_PROFILE.title);
+  const [headerEmail,     setHeaderEmail]     = React.useState(DEFAULT_PROFILE.email);
+  const [headerPhone,     setHeaderPhone]     = React.useState(DEFAULT_PROFILE.phone);
+  const [headerLocation,  setHeaderLocation]  = React.useState(DEFAULT_PROFILE.location);
+  const [headerPortfolio, setHeaderPortfolio] = React.useState(DEFAULT_PROFILE.portfolio);
+  const [headerOpen,      setHeaderOpen]      = React.useState(false);
+
   const apiUrl = getApiUrl();
 
   const showNotification = (text: string, type: "success" | "error" = "success") => {
@@ -308,55 +317,63 @@ Senior Software Engineer & Cloud Architect`;
       {/* ── Print-only CSS: hide all dashboard chrome, show only the letter canvas ── */}
       <style>{`
         @media print {
-          /* hide everything in the page */
-          body > * { display: none !important; }
+          /* ── 1. Nuke the entire Next.js shell ── */
+          body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
 
-          /* show only the root app shell */
-          body > #__next,
-          body > div { display: block !important; }
+          /* Hide every direct child of body except our container */
+          body > *:not([data-print-root]) { display: none !important; }
 
-          /* hide all dashboard chrome: sidebar, topbar, controls column */
-          [data-sidebar], aside, header, nav,
-          .print\\:hidden,
-          [data-print="hidden"] { display: none !important; }
+          /* The ancestor chain must be visible */
+          [data-print-root],
+          [data-print-root] > * { display: block !important; }
 
-          /* make the letter canvas take the full page */
+          /* Hide everything INSIDE the root EXCEPT the canvas */
+          [data-print-root] [data-print-hide] { display: none !important; }
+
+          /* ── 2. Canvas: natural flow, NOT fixed ── */
+          /* Fixed/height:100% cuts the letter to one page.          */
+          /* Static + height:auto lets it flow across as many pages  */
+          /* as the content needs.                                    */
           [data-print-canvas] {
+            position: static !important;
             display: block !important;
-            position: fixed !important;
-            inset: 0 !important;
             width: 100% !important;
-            height: 100% !important;
+            height: auto !important;
+            min-height: unset !important;
             margin: 0 !important;
-            padding: 36pt 44pt !important;
+            padding: 18mm 20mm !important;
             background: #fff !important;
             border: none !important;
             border-radius: 0 !important;
             box-shadow: none !important;
             overflow: visible !important;
-            min-height: unset !important;
-            z-index: 9999 !important;
-            font-family: 'Times New Roman', Georgia, serif !important;
             color: #0f172a !important;
+            font-family: Arial, Helvetica, sans-serif !important;
+            font-size: 11pt !important;
           }
 
-          /* make the textarea behave like static text */
+          /* ── 3. Textarea → static text ── */
           [data-print-canvas] textarea {
             display: block !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: unset !important;
+            overflow: visible !important;
             border: none !important;
+            outline: none !important;
             resize: none !important;
             background: transparent !important;
             padding: 0 !important;
-            font-size: 10.5pt !important;
-            line-height: 1.7 !important;
+            margin: 0 !important;
+            font-size: 11pt !important;
+            line-height: 1.75 !important;
             color: #0f172a !important;
             white-space: pre-wrap !important;
-            width: 100% !important;
-            overflow: visible !important;
-            height: auto !important;
-            min-height: unset !important;
+            word-break: break-word !important;
+            font-family: inherit !important;
           }
 
+          /* ── 4. Page settings ── */
           @page {
             size: A4 portrait;
             margin: 0;
@@ -505,6 +522,78 @@ Senior Software Engineer & Cloud Architect`;
                 ))
               )}
             </div>
+          </div>
+
+          {/* ── Letterhead Header Editor ── */}
+          <div className="rounded-2xl bg-white/80 dark:bg-[#0c1222]/80 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] shadow-sm overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setHeaderOpen(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Edit3 className="h-4 w-4 text-violet-500" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-heading">
+                  Letterhead Header
+                </span>
+              </div>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded transition-colors ${
+                headerOpen ? "bg-violet-500/15 text-violet-400" : "bg-slate-200 dark:bg-white/[0.06] text-slate-500"
+              }`}>
+                {headerOpen ? "collapse" : "edit"}
+              </span>
+            </button>
+
+            {headerOpen && (
+              <div className="px-4 pb-4 space-y-3 border-t border-slate-200 dark:border-white/[0.06] pt-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Full Name</label>
+                  <input
+                    type="text" value={headerName} onChange={e => setHeaderName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-violet-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Job Title / Headline</label>
+                  <input
+                    type="text" value={headerTitle} onChange={e => setHeaderTitle(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-violet-500"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Email</label>
+                    <input
+                      type="email" value={headerEmail} onChange={e => setHeaderEmail(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-violet-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Phone</label>
+                    <input
+                      type="text" value={headerPhone} onChange={e => setHeaderPhone(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-violet-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Location</label>
+                    <input
+                      type="text" value={headerLocation} onChange={e => setHeaderLocation(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-violet-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Portfolio URL</label>
+                    <input
+                      type="text" value={headerPortfolio} onChange={e => setHeaderPortfolio(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-[#070b14] border border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white focus:outline-none focus:border-violet-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Form Fields: Role, Company, Recipient */}
@@ -680,44 +769,43 @@ Senior Software Engineer & Cloud Architect`;
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Live Document Canvas (Pure White Sheet with Letterhead) */}
-        <div className="lg:col-span-7" data-print="canvas-wrapper">
+        {/* RIGHT COLUMN: Live Document Canvas */}
+        <div className="lg:col-span-7" data-print-hide="false">
           <div
             data-print-canvas
             className="bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 p-8 sm:p-12 transition-all min-h-[750px] relative font-sans leading-relaxed"
           >
-            {/* Pristine Executive Letterhead */}
+            {/* ── Editable Letterhead ── */}
             <div className="border-b-2 border-slate-900/90 pb-6 mb-8 flex items-start justify-between">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950 font-heading uppercase">
-                  {DEFAULT_PROFILE.name}
+              <div className="flex-1 min-w-0">
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950 font-heading uppercase leading-tight">
+                  {headerName || DEFAULT_PROFILE.name}
                 </h2>
                 <div className="text-xs sm:text-sm font-semibold tracking-wider text-blue-700 uppercase mt-0.5">
-                  {DEFAULT_PROFILE.title}
+                  {headerTitle || DEFAULT_PROFILE.title}
                 </div>
-
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 mt-3 font-medium">
-                  <span>{DEFAULT_PROFILE.email}</span>
-                  <span>•</span>
-                  <span>{DEFAULT_PROFILE.phone}</span>
-                  <span>•</span>
-                  <span>{DEFAULT_PROFILE.location}</span>
-                  <span>•</span>
-                  <a href={DEFAULT_PROFILE.portfolio} className="text-blue-600 hover:underline">
-                    khalfanathman.dev
-                  </a>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 mt-3 font-medium">
+                  {headerEmail    && <span>{headerEmail}</span>}
+                  {headerEmail    && <span>•</span>}
+                  {headerPhone    && <span>{headerPhone}</span>}
+                  {headerPhone    && <span>•</span>}
+                  {headerLocation && <span>{headerLocation}</span>}
+                  {headerPortfolio && (
+                    <>
+                      <span>•</span>
+                      <a href={headerPortfolio} className="text-blue-600 hover:underline">
+                        {headerPortfolio.replace(/^https?:\/\//, "")}
+                      </a>
+                    </>
+                  )}
                 </div>
               </div>
 
-              {/* Portrait headshot — uses /profile.jpg from public/, same as CV */}
+              {/* Headshot — /profile.jpg served from public/ */}
               {includePhoto && (
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-slate-300 shadow-sm flex-shrink-0 ml-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/profile.jpg"
-                    alt={DEFAULT_PROFILE.name}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src="/profile.jpg" alt={headerName} className="w-full h-full object-cover" />
                 </div>
               )}
             </div>
