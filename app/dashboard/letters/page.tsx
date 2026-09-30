@@ -49,7 +49,7 @@ const DEFAULT_PROFILE = {
   portfolio: "https://khalfanathman.dev",
   linkedin: "https://linkedin.com/in/khalfanathman",
   github: "https://github.com/AbuArwa001",
-  avatarUrl: "https://avatars.githubusercontent.com/u/88195864?v=4",
+  avatarUrl: "/profile.jpg",
 };
 
 const DEFAULT_LETTER_BODY = `Dear Hiring Team,
@@ -86,32 +86,6 @@ export default function CoverLetterPage() {
   const [includePhoto, setIncludePhoto] = React.useState(false);
   const [content, setContent] = React.useState(DEFAULT_LETTER_BODY);
   const [aiCustomPrompt, setAiCustomPrompt] = React.useState("");
-
-  // ── Base64 avatar for print-safe image rendering ──────────────
-  // Cross-origin <img> tags render as black boxes when printing.
-  // Converting to a data: URL bypasses that restriction entirely.
-  const [avatarDataUrl, setAvatarDataUrl] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    const fetchAvatar = async () => {
-      try {
-        // Use our server-side proxy so there are zero CORS/browser-security
-        // restrictions — the server fetches GitHub's CDN freely, converts
-        // the image to a base64 data: URL, and returns it to the client.
-        const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(DEFAULT_PROFILE.avatarUrl)}`;
-        const res = await fetch(proxyUrl);
-        if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
-        const { dataUrl } = await res.json();
-        if (dataUrl) setAvatarDataUrl(dataUrl);
-      } catch (err) {
-        console.warn("Avatar proxy failed, falling back to direct URL:", err);
-        // Direct URL works fine on screen; print will still have the black-box
-        // issue but that's better than showing nothing at all.
-        setAvatarDataUrl(DEFAULT_PROFILE.avatarUrl);
-      }
-    };
-    fetchAvatar();
-  }, []);
 
   const apiUrl = getApiUrl();
 
@@ -735,24 +709,15 @@ Senior Software Engineer & Cloud Architect`;
                 </div>
               </div>
 
-              {/* Optional Tasteful Portrait Avatar */}
-              {/* Uses base64 data: URL so it renders correctly in print (cross-origin URLs go black) */}
+              {/* Portrait headshot — uses /profile.jpg from public/, same as CV */}
               {includePhoto && (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-slate-300 shadow-sm flex-shrink-0 ml-4 bg-slate-100">
-                  {avatarDataUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={avatarDataUrl}
-                      alt={DEFAULT_PROFILE.name}
-                      className="w-full h-full object-cover"
-                      style={{ display: "block" }}
-                    />
-                  ) : (
-                    // placeholder while fetching
-                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold">
-                      KA
-                    </div>
-                  )}
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-slate-300 shadow-sm flex-shrink-0 ml-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/profile.jpg"
+                    alt={DEFAULT_PROFILE.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               )}
             </div>
