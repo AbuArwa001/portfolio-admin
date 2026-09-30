@@ -313,70 +313,82 @@ Senior Software Engineer & Cloud Architect`;
   });
 
   return (
-    <div className="space-y-6">
-      {/* ── Print-only CSS: hide all dashboard chrome, show only the letter canvas ── */}
+    <div className="space-y-6 print:space-y-0 print:m-0 print:p-0">
+      {/* ── Print-only CSS: clean white A4 flow layout without dark mode background or cut-offs ── */}
       <style>{`
         @media print {
-          /* ── Step 1: make the whole page invisible ───────────────────
-             We use visibility:hidden (NOT display:none) because display:none
-             would break the flex/grid containers that Next.js needs to keep
-             in the DOM. Visibility just makes pixels disappear without
-             removing elements from layout.                              */
-          body * {
-            visibility: hidden !important;
+          @page {
+            size: A4 portrait;
+            margin: 15mm 15mm 15mm 15mm;
           }
 
-          /* ── Step 2: make ONLY the canvas (and its children) visible ─ */
-          [data-print-canvas],
-          [data-print-canvas] * {
-            visibility: visible !important;
+          /* Reset all background colors so dark mode does not produce black pages */
+          html,
+          body,
+          #__next,
+          main,
+          div {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
           }
 
-          /* ── Step 3: pull canvas out of its container to page origin ─
-             position:absolute lets it escape the flex/grid context and
-             sit at the top-left corner of the printed page.            */
-          [data-print-canvas] {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
+          html,
+          body {
             width: 100% !important;
             height: auto !important;
-            min-height: unset !important;
+            min-height: 0 !important;
             margin: 0 !important;
-            padding: 18mm 20mm !important;
-            background: #fff !important;
+            padding: 0 !important;
+            overflow: visible !important;
+          }
+
+          /* Hide all non-printable elements completely so they do not take layout space */
+          .print\\:hidden,
+          aside,
+          header,
+          nav {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+          }
+
+          /* Main layout container must not constrain or clip */
+          main {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            overflow: visible !important;
+          }
+
+          /* Canvas flows naturally as a static block across multiple pages */
+          [data-print-canvas] {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
             border: none !important;
             border-radius: 0 !important;
             box-shadow: none !important;
-            overflow: visible !important;
+            background: #ffffff !important;
             color: #0f172a !important;
-            font-family: Arial, Helvetica, sans-serif !important;
-            font-size: 11pt !important;
+            overflow: visible !important;
           }
 
-          /* ── Step 4: textarea renders as flowing text ────────────── */
-          [data-print-canvas] textarea {
-            height: auto !important;
-            min-height: unset !important;
-            overflow: visible !important;
-            border: none !important;
-            outline: none !important;
-            resize: none !important;
-            background: transparent !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            font-size: 11pt !important;
-            line-height: 1.75 !important;
-            color: #0f172a !important;
-            white-space: pre-wrap !important;
-            word-break: break-word !important;
-            font-family: inherit !important;
-          }
-
-          /* ── Step 5: page size & colour accuracy ─────────────────── */
-          @page {
-            size: A4 portrait;
-            margin: 0;
+          .print-avoid-break {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
           }
 
           * {
@@ -388,7 +400,7 @@ Senior Software Engineer & Cloud Architect`;
       {/* Toast Notification */}
       {notification && (
         <div
-          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-3 text-sm font-medium animate-in fade-in slide-in-from-bottom-5 duration-200 ${
+          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-3 text-sm font-medium animate-in fade-in slide-in-from-bottom-5 duration-200 print:hidden ${
             notification.type === "success"
               ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300 backdrop-blur-xl"
               : "bg-red-500/15 border-red-500/30 text-red-300 backdrop-blur-xl"
@@ -461,7 +473,7 @@ Senior Software Engineer & Cloud Architect`;
       </div>
 
       {/* Main Workspace: Left Controls / Right Canvas */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start print:block print:w-full print:m-0 print:p-0">
         {/* LEFT COLUMN: Controls, AI Tailor & Database Retrieval (Print Hidden) */}
         <div className="lg:col-span-5 space-y-5 print:hidden">
           {/* Saved Letters Accordion / History Drawer */}
@@ -770,13 +782,13 @@ Senior Software Engineer & Cloud Architect`;
         </div>
 
         {/* RIGHT COLUMN: Live Document Canvas */}
-        <div className="lg:col-span-7" data-print-hide="false">
+        <div className="lg:col-span-7 print:w-full print:m-0 print:p-0 print:block">
           <div
             data-print-canvas
-            className="bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 p-8 sm:p-12 transition-all min-h-[750px] relative font-sans leading-relaxed"
+            className="bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 p-8 sm:p-12 transition-all min-h-[750px] relative font-sans leading-relaxed print:p-0 print:m-0 print:border-none print:shadow-none print:rounded-none print:w-full print:min-h-0 print:bg-white print:text-slate-900"
           >
             {/* ── Editable Letterhead ── */}
-            <div className="border-b-2 border-slate-900/90 pb-6 mb-8 flex items-start justify-between">
+            <div className="border-b-2 border-slate-900/90 pb-6 mb-8 flex items-start justify-between print-avoid-break">
               <div className="flex-1 min-w-0">
                 <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950 font-heading uppercase leading-tight">
                   {headerName || DEFAULT_PROFILE.name}
@@ -803,7 +815,7 @@ Senior Software Engineer & Cloud Architect`;
 
               {/* Headshot — /profile.jpg served from public/ */}
               {includePhoto && (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-slate-300 shadow-sm flex-shrink-0 ml-4">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-slate-300 shadow-sm flex-shrink-0 ml-4 print-avoid-break">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/profile.jpg" alt={headerName} className="w-full h-full object-cover" />
                 </div>
@@ -811,26 +823,29 @@ Senior Software Engineer & Cloud Architect`;
             </div>
 
             {/* Date & Recipient Block */}
-            <div className="mb-6 text-xs text-slate-700 space-y-1">
+            <div className="mb-6 text-xs text-slate-700 space-y-1 print-avoid-break">
               <div className="font-semibold text-slate-900">{todayFormatted}</div>
               <div className="pt-2 font-bold text-slate-900">{recipient || "Hiring Team"}</div>
               <div className="font-semibold text-slate-800">{company || "Target Organization"}</div>
               <div className="text-slate-500">Re: Application for {role || "Open Position"}</div>
             </div>
 
-            {/* Letter Body - Editable Directly in Canvas */}
+            {/* Letter Body - Editable Directly in Canvas on screen, formatted text block in Print */}
             <div className="space-y-4">
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 rows={18}
-                className="w-full text-xs sm:text-sm text-slate-800 leading-relaxed bg-transparent border-0 focus:ring-0 focus:outline-none resize-none selection:bg-blue-100 p-0"
+                className="w-full text-xs sm:text-sm text-slate-800 leading-relaxed bg-transparent border-0 focus:ring-0 focus:outline-none resize-none selection:bg-blue-100 p-0 print:hidden"
                 placeholder="Compose your application letter here..."
               />
+              <div className="hidden print:block text-slate-900 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-sans">
+                {content}
+              </div>
             </div>
 
             {/* Formal Footer / Signature */}
-            <div className="mt-8 pt-4 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+            <div className="mt-8 pt-4 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500 font-mono print-avoid-break">
               <span>Executive Cover Letter • {headerName || DEFAULT_PROFILE.name}</span>
               <span>Generated & Tailored via Portfolio Mission Control</span>
             </div>
