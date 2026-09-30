@@ -87,6 +87,29 @@ export default function CoverLetterPage() {
   const [content, setContent] = React.useState(DEFAULT_LETTER_BODY);
   const [aiCustomPrompt, setAiCustomPrompt] = React.useState("");
 
+  // ── Base64 avatar for print-safe image rendering ──────────────
+  // Cross-origin <img> tags render as black boxes when printing.
+  // Converting to a data: URL bypasses that restriction entirely.
+  const [avatarDataUrl, setAvatarDataUrl] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const fetchAvatar = async () => {
+      try {
+        const res = await fetch(DEFAULT_PROFILE.avatarUrl);
+        const blob = await res.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === "string") setAvatarDataUrl(reader.result);
+        };
+        reader.readAsDataURL(blob);
+      } catch {
+        // fall back to original URL — print may still fail but screen is fine
+        setAvatarDataUrl(DEFAULT_PROFILE.avatarUrl);
+      }
+    };
+    fetchAvatar();
+  }, []);
+
   const apiUrl = getApiUrl();
 
   const showNotification = (text: string, type: "success" | "error" = "success") => {
@@ -305,6 +328,69 @@ Senior Software Engineer & Cloud Architect`;
 
   return (
     <div className="space-y-6">
+      {/* ── Print-only CSS: hide all dashboard chrome, show only the letter canvas ── */}
+      <style>{`
+        @media print {
+          /* hide everything in the page */
+          body > * { display: none !important; }
+
+          /* show only the root app shell */
+          body > #__next,
+          body > div { display: block !important; }
+
+          /* hide all dashboard chrome: sidebar, topbar, controls column */
+          [data-sidebar], aside, header, nav,
+          .print\\:hidden,
+          [data-print="hidden"] { display: none !important; }
+
+          /* make the letter canvas take the full page */
+          [data-print-canvas] {
+            display: block !important;
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 36pt 44pt !important;
+            background: #fff !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+            min-height: unset !important;
+            z-index: 9999 !important;
+            font-family: 'Times New Roman', Georgia, serif !important;
+            color: #0f172a !important;
+          }
+
+          /* make the textarea behave like static text */
+          [data-print-canvas] textarea {
+            display: block !important;
+            border: none !important;
+            resize: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            font-size: 10.5pt !important;
+            line-height: 1.7 !important;
+            color: #0f172a !important;
+            white-space: pre-wrap !important;
+            width: 100% !important;
+            overflow: visible !important;
+            height: auto !important;
+            min-height: unset !important;
+          }
+
+          @page {
+            size: A4 portrait;
+            margin: 0;
+          }
+
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        }
+      `}</style>
       {/* Toast Notification */}
       {notification && (
         <div
@@ -618,8 +704,11 @@ Senior Software Engineer & Cloud Architect`;
         </div>
 
         {/* RIGHT COLUMN: Live Document Canvas (Pure White Sheet with Letterhead) */}
-        <div className="lg:col-span-7">
-          <div className="bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 p-8 sm:p-12 transition-all min-h-[750px] relative font-sans leading-relaxed print:p-0 print:m-0 print:border-none print:shadow-none print:rounded-none">
+        <div className="lg:col-span-7" data-print="canvas-wrapper">
+          <div
+            data-print-canvas
+            className="bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 p-8 sm:p-12 transition-all min-h-[750px] relative font-sans leading-relaxed"
+          >
             {/* Pristine Executive Letterhead */}
             <div className="border-b-2 border-slate-900/90 pb-6 mb-8 flex items-start justify-between">
               <div>
@@ -644,13 +733,23 @@ Senior Software Engineer & Cloud Architect`;
               </div>
 
               {/* Optional Tasteful Portrait Avatar */}
+              {/* Uses base64 data: URL so it renders correctly in print (cross-origin URLs go black) */}
               {includePhoto && (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-slate-300 shadow-sm flex-shrink-0 ml-4">
-                  <img
-                    src={DEFAULT_PROFILE.avatarUrl}
-                    alt={DEFAULT_PROFILE.name}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-slate-300 shadow-sm flex-shrink-0 ml-4 bg-slate-100">
+                  {avatarDataUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={avatarDataUrl}
+                      alt={DEFAULT_PROFILE.name}
+                      className="w-full h-full object-cover"
+                      style={{ display: "block" }}
+                    />
+                  ) : (
+                    // placeholder while fetching
+                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold">
+                      KA
+                    </div>
+                  )}
                 </div>
               )}
             </div>
