@@ -831,7 +831,7 @@ Senior Software Engineer & Cloud Architect`;
 
             {/* Formal Footer / Signature */}
             <div className="mt-8 pt-4 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-              <span>Executive Cover Letter • {DEFAULT_PROFILE.name}</span>
+              <span>Executive Cover Letter • {headerName || DEFAULT_PROFILE.name}</span>
               <span>Generated & Tailored via Portfolio Mission Control</span>
             </div>
           </div>
