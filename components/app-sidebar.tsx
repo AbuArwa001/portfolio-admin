@@ -23,6 +23,12 @@ import {
   Globe,
   Briefcase,
   FileSignature,
+  GraduationCap,
+  Network,
+  Cloud,
+  Building2,
+  Layers,
+  BookMarked,
   X,
 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -55,6 +61,49 @@ const CAREER_ITEMS = [
     url: "/dashboard/cv",
     icon: FileText,
     badge: "ATS",
+  },
+];
+
+const STUDY_ITEMS = [
+  {
+    title: "Study Hub",
+    url: "/dashboard/study",
+    icon: GraduationCap,
+    badge: "Hub",
+    exact: true,
+  },
+  {
+    title: "CCNA 200-301",
+    url: "/dashboard/study/ccna",
+    icon: Network,
+    badge: "Labs & Prep",
+    highlight: true,
+  },
+  {
+    title: "AWS SAA-C03",
+    url: "/dashboard/study/aws",
+    icon: Cloud,
+    badge: "Labs & Prep",
+    highlight: true,
+  },
+  {
+    title: "Interview Prep",
+    url: "/dashboard/study/interviews",
+    icon: Building2,
+    badge: "AI Briefs",
+    highlight: false,
+  },
+  {
+    title: "Flashcards",
+    url: "/dashboard/study/flashcards",
+    icon: Layers,
+    badge: "SM-2",
+  },
+  {
+    title: "Notes & Mistakes",
+    url: "/dashboard/study/notes",
+    icon: BookMarked,
+    badge: "Journal",
   },
 ];
 
@@ -159,6 +208,63 @@ export function AppSidebar() {
                       </span>
                     )}
                     {active && <ChevronRight className="h-3.5 w-3.5 text-blue-600 dark:text-primary opacity-80" />}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Study & Certifications Section */}
+        <div>
+          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 font-mono flex items-center justify-between">
+            <span>Study & Prep</span>
+            <span className="text-[9px] px-1.5 py-0.2 text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 rounded font-semibold border border-indigo-500/20">PRO</span>
+          </div>
+
+          <div className="space-y-1">
+            {STUDY_ITEMS.map((item) => {
+              const active = item.exact
+                ? pathname === item.url
+                : pathname === item.url || pathname.startsWith(item.url + "/");
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.url}
+                  href={item.url}
+                  onClick={() => closeOnNav && setMobileOpen(false)}
+                  className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all group ${
+                    active
+                      ? "bg-blue-600/10 dark:bg-gradient-to-r dark:from-blue-600/20 dark:via-primary/10 dark:to-transparent text-blue-700 dark:text-white font-semibold border-l-2 border-blue-600 dark:border-primary shadow-sm"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-white/[0.04]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Icon
+                      className={`h-4 w-4 flex-shrink-0 transition-colors ${
+                        active
+                          ? "text-blue-600 dark:text-primary"
+                          : "text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white"
+                      }`}
+                    />
+                    <span className="truncate">{item.title}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {item.badge && (
+                      <span
+                        className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
+                          item.highlight
+                            ? "bg-gradient-to-r from-indigo-500/20 to-blue-500/20 text-indigo-600 dark:text-indigo-300 border-indigo-500/30 font-bold"
+                            : "bg-slate-200/60 dark:bg-white/[0.05] text-slate-600 dark:text-slate-400 border-slate-300/60 dark:border-white/[0.06]"
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                    {active && (
+                      <ChevronRight className="h-3.5 w-3.5 text-blue-600 dark:text-primary opacity-80" />
+                    )}
                   </div>
                 </Link>
               );
