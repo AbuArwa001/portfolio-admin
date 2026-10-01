@@ -15,15 +15,19 @@ import {
   Sparkles,
   ChevronRight,
   Play,
+  Calculator,
+  Timer,
 } from "lucide-react";
+import PomodoroTimerModal from "@/components/study/pomodoro-timer-modal";
 
 const NAV_TABS = [
-  { label: "Overview", href: "/dashboard/study", icon: GraduationCap, exact: true },
-  { label: "Quiz & Mock Exams", href: "/dashboard/study/exam", icon: Play },
+  { label: "Overview & Heatmap", href: "/dashboard/study", icon: GraduationCap, exact: true },
   { label: "Cisco CCNA (200-301)", href: "/dashboard/study/ccna", icon: Network },
   { label: "AWS Solutions Architect (SAA-C03)", href: "/dashboard/study/aws", icon: Cloud },
-  { label: "Interview Prep", href: "/dashboard/study/interviews", icon: Building2 },
+  { label: "Subnetting Practice", href: "/dashboard/study/subnetting", icon: Calculator },
+  { label: "Quiz & Mock Exams", href: "/dashboard/study/exam", icon: Play },
   { label: "Flashcards (SM-2)", href: "/dashboard/study/flashcards", icon: Layers },
+  { label: "Interview Prep", href: "/dashboard/study/interviews", icon: Building2 },
   { label: "Mistakes & Notes", href: "/dashboard/study/notes", icon: BookMarked },
 ];
 
@@ -33,6 +37,7 @@ export default function StudyPlatformLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [isPomodoroOpen, setIsPomodoroOpen] = React.useState(false);
 
   return (
     <div className="space-y-6">
@@ -48,7 +53,7 @@ export default function StudyPlatformLayout({
                 <Sparkles className="w-3 h-3 text-indigo-300" />
                 Private Study Platform
               </span>
-              <span className="text-xs text-slate-400 font-mono">v1.0 (Phase 3 Active)</span>
+              <span className="text-xs text-slate-400 font-mono">v1.0 (Phase 6 Active)</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">
               Certification & Interview Mastery Hub
@@ -59,6 +64,19 @@ export default function StudyPlatformLayout({
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Focus Timer Launch Button */}
+            <button
+              onClick={() => setIsPomodoroOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/30 text-rose-300 transition-colors shadow-inner text-left cursor-pointer group"
+              title="Launch Pomodoro Focus Timer"
+            >
+              <Timer className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
+              <div>
+                <div className="text-[10px] text-rose-400 uppercase font-mono tracking-wider font-semibold">Focus Timer</div>
+                <div className="text-xs sm:text-sm font-bold text-rose-200">25m / 5m</div>
+              </div>
+            </button>
+
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700/60 shadow-inner">
               <Flame className="w-4 h-4 text-amber-400 animate-pulse" />
               <div>
@@ -66,6 +84,7 @@ export default function StudyPlatformLayout({
                 <div className="text-xs sm:text-sm font-bold text-amber-300">Active Daily</div>
               </div>
             </div>
+
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700/60 shadow-inner">
               <Clock className="w-4 h-4 text-emerald-400" />
               <div>
@@ -101,6 +120,15 @@ export default function StudyPlatformLayout({
 
       {/* Main Content Area */}
       <div className="min-w-0">{children}</div>
+
+      {/* Pomodoro Timer Modal */}
+      <PomodoroTimerModal
+        isOpen={isPomodoroOpen}
+        onClose={() => setIsPomodoroOpen(false)}
+        onSessionLogged={() => {
+          // If on study overview page, triggers could re-fetch
+        }}
+      />
     </div>
   );
 }

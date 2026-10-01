@@ -27,6 +27,11 @@ import {
   Brain,
   TrendingUp,
   X,
+  Calculator,
+  Download,
+  Upload,
+  FileJson,
+  Database,
 } from "lucide-react";
 import {
   getStudyCertifications,
@@ -34,6 +39,9 @@ import {
   getStudyLabs,
   getStudyProgress,
   setStudyGoal,
+  exportStudyQuestions,
+  importStudyQuestions,
+  exportStudyFlashcards,
 } from "@/lib/study-api";
 import type { StudyCertification, StudyTopic, StudyLab, StudyProgress } from "@/types/study";
 

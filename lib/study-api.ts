@@ -554,6 +554,63 @@ export async function setStudyGoal(data: {
   return res.json();
 }
 
+// ── Question Quality & Backup Helpers ───────────────────────────
+export async function toggleQuestionFavorite(questionId: number): Promise<{ is_favorite: boolean }> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/questions/${questionId}/toggle_favorite/`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Failed to toggle question favorite");
+  return res.json();
+}
+
+export async function reportQuestionIssue(questionId: number, reason: string): Promise<{ status: string }> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/questions/${questionId}/report_issue/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+  });
+  if (!res.ok) throw new Error("Failed to report question");
+  return res.json();
+}
+
+export async function exportStudyQuestions(params?: { cert?: string; topic?: number }): Promise<{
+  exported_at: string;
+  count: number;
+  questions: StudyQuestion[];
+}> {
+  const query = new URLSearchParams();
+  if (params?.cert) query.set("cert", params.cert);
+  if (params?.topic) query.set("topic", String(params.topic));
+  const res = await authenticatedFetch(`${STUDY_BASE}/questions/export_data/?${query.toString()}`);
+  if (!res.ok) throw new Error("Failed to export questions");
+  return res.json();
+}
+
+export async function importStudyQuestions(questions: any[]): Promise<{
+  status: string;
+  created_count: number;
+  updated_count: number;
+  total_processed: number;
+}> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/questions/import_data/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ questions }),
+  });
+  if (!res.ok) throw new Error("Failed to import questions");
+  return res.json();
+}
+
+export async function exportStudyFlashcards(): Promise<{
+  exported_at: string;
+  count: number;
+  flashcards: StudyFlashcard[];
+}> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/flashcards/export_data/`);
+  if (!res.ok) throw new Error("Failed to export flashcards");
+  return res.json();
+}
+
 // ── Public Badge Endpoint ──────────────────────────────────────
 export async function getPublicStudyBadge(): Promise<PublicStudyBadgeData> {
   const res = await fetch(`${STUDY_BASE}/public-badge/`, {
