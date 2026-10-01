@@ -5,6 +5,7 @@ import type {
   StudyTopic,
   StudyLab,
   StudyLabAttempt,
+  LabCheckerResult,
   StudyQuestion,
   StudyExamSession,
   StudyExamAnswer,
@@ -90,6 +91,27 @@ export async function updateLabAttempt(attemptId: number, data: Partial<StudyLab
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to update lab attempt");
+  return res.json();
+}
+
+export async function checkLabConfig(
+  labId: number,
+  data: { submitted_config: string; time_spent_seconds?: number }
+): Promise<{ attempt: StudyLabAttempt; checker_results: LabCheckerResult }> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/labs/${labId}/check_config/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to evaluate configuration");
+  return res.json();
+}
+
+export async function resetLabAttempt(labId: number): Promise<{ status: string; message: string }> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/labs/${labId}/reset_attempt/`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Failed to reset lab attempt");
   return res.json();
 }
 

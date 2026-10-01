@@ -67,6 +67,17 @@ export interface LabAwsVerificationCheck {
   expected: any;
 }
 
+export interface LabCheckerResult {
+  score: number;
+  passed: boolean;
+  total_rules: number;
+  passed_count: number;
+  passed_rules: string[];
+  missing_rules: Array<{ description: string; help_tip: string; section?: string }>;
+  line_diagnostics: Array<{ line: string; status: "correct" | "neutral" }>;
+  summary: string;
+}
+
 export interface StudyLabAttempt {
   id: number;
   user: number;
@@ -76,13 +87,7 @@ export interface StudyLabAttempt {
   notes: string;
   time_spent_seconds: number;
   submitted_config?: string;
-  checker_results?: {
-    score?: number;
-    passed_rules?: string[];
-    missing_rules?: string[];
-    wrong_lines?: string[];
-    summary?: string;
-  };
+  checker_results?: LabCheckerResult;
   teardown_confirmed: boolean;
   completed_at?: string | null;
   created_at?: string;
