@@ -131,6 +131,28 @@ export async function reportQuestion(questionId: number, reason: string): Promis
   return res.json();
 }
 
+export async function generateQuestions(topicId: number, count = 10, difficulty = "medium"): Promise<{
+  message: string;
+  created_count: number;
+  questions: StudyQuestion[];
+}> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/questions/generate/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ topic_id: topicId, count, difficulty }),
+  });
+  if (!res.ok) throw new Error("Failed to generate questions");
+  return res.json();
+}
+
+export async function getRetryQueue(certCode?: string): Promise<StudyQuestion[]> {
+  const query = certCode ? `?cert=${encodeURIComponent(certCode)}` : "";
+  const res = await authenticatedFetch(`${STUDY_BASE}/questions/retry_queue/${query}`);
+  if (!res.ok) throw new Error("Failed to fetch retry queue");
+  const data = await res.json();
+  return Array.isArray(data) ? data : data.results || [];
+}
+
 // ── Exam Sessions ──────────────────────────────────────────────
 export async function getExamSessions(): Promise<StudyExamSession[]> {
   const res = await authenticatedFetch(`${STUDY_BASE}/exam-sessions/`);
@@ -145,56 +167,103 @@ export async function getExamSession(id: number): Promise<StudyExamSession> {
   return res.json();
 }
 
-export async function createExamSession(data: {
-  certification: number;
+export async function startExamSession(data: {
+  certification_code: string;
   mode: "practice" | "timed_mock" | "retry_wrong" | "weak_drill";
-  topic?: number | null;
-  duration_minutes: number;
+  topic_id?: number | null;
+  question_count?: number;
+}): Promise<{
+  session_id: number;
+  certification_code: string;
+  certification_name: string;
+  mode: string;
+  topic_name?: string | null;
   total_questions: number;
-}): Promise<StudyExamSession> {
-  const res = await authenticatedFetch(`${STUDY_BASE}/exam-sessions/`, {
+  duration_minutes: number;
+  questions: StudyQuestion[];
+  started_at: string;
+}> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/exam-sessions/start/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to initialize exam session");
+  if (!res.ok) throw new Error("Failed to start exam session");
   return res.json();
 }
 
-export async function submitExamAnswer(data: {
-  session: number;
-  question: number;
-  user_answers: string[];
-  is_correct: boolean;
-  time_spent_seconds: number;
-  flagged_for_review?: boolean;
-}): Promise<StudyExamAnswer> {
-  const res = await authenticatedFetch(`${STUDY_BASE}/exam-answers/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error("Failed to save exam answer");
-  return res.json();
-}
-
-export async function completeExamSession(
+export async function submitExamAnswer(
   sessionId: number,
   data: {
-    score_pct: number;
-    passed: boolean;
-    time_spent_seconds: number;
-    domain_breakdown: Record<string, any>;
-    is_completed: boolean;
-    completed_at: string;
+    question_id: number;
+    user_answers: string[];
+    time_spent_seconds?: number;
+    flagged_for_review?: boolean;
   }
-): Promise<StudyExamSession> {
-  const res = await authenticatedFetch(`${STUDY_BASE}/exam-sessions/${sessionId}/`, {
-    method: "PATCH",
+): Promise<{
+  answer_id: number;
+  question_id: number;
+  is_correct: boolean;
+  user_answers: string[];
+  correct_answers: string[];
+  explanation: string;
+  distractor_notes?: Record<string, string>;
+  trigger_words?: string;
+  step_by_step_solution?: string;
+  reference_doc_url?: string;
+}> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/exam-sessions/${sessionId}/submit_answer/`, {
+    method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to finalize exam session");
+  if (!res.ok) throw new Error("Failed to submit exam answer");
+  return res.json();
+}
+
+export async function finishExamSession(sessionId: number): Promise<StudyExamSession> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/exam-sessions/${sessionId}/finish/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to finish exam session");
+  return res.json();
+}
+
+export async function getExamReview(sessionId: number): Promise<{
+  session: StudyExamSession;
+  total_questions: number;
+  correct_count: number;
+  wrong_count: number;
+  score_pct: number;
+  passed: boolean;
+  domain_breakdown: Record<string, { total: number; correct: number; pct: number }>;
+  wrong_questions: Array<{
+    question_id: number;
+    question_text: string;
+    scenario_context?: string;
+    code_output?: string;
+    question_type: string;
+    options: Array<{ id: string; text: string }>;
+    user_answers: string[];
+    correct_answers: string[];
+    is_correct: boolean;
+    flagged_for_review: boolean;
+    time_spent_seconds: number;
+    explanation: string;
+    distractor_notes?: Record<string, string>;
+    trigger_words?: string;
+    step_by_step_solution?: string;
+    reference_doc_url?: string;
+    domain_number: number;
+    domain_name: string;
+    topic_name: string;
+    difficulty: string;
+  }>;
+  all_questions: Array<any>;
+}> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/exam-sessions/${sessionId}/review/`);
+  if (!res.ok) throw new Error("Failed to fetch exam review");
   return res.json();
 }
 
