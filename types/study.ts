@@ -241,26 +241,48 @@ export interface StudyInterviewBrief {
   tech_stack: string[];
   role_requirements_map: Array<{
     requirement: string;
-    matched_skills: string[];
-    portfolio_proof: string;
+    candidate_skill_or_project?: string;
+    match_strength?: "High" | "Medium" | "Growth Area" | string;
+    recommended_angle?: string;
+    matched_skills?: string[];
+    portfolio_proof?: string;
   }>;
   technical_questions: Array<{
     question: string;
-    category: string;
+    category?: string;
     suggested_answer: string;
+    deep_dive_topics?: string[];
   }>;
   behavioral_star_questions: Array<{
     question: string;
-    star_situation: string;
-    star_task: string;
-    star_action: string;
-    star_result: string;
+    competency?: string;
+    situation?: string;
+    task?: string;
+    action?: string;
+    result?: string;
+    star_situation?: string;
+    star_task?: string;
+    star_action?: string;
+    star_result?: string;
   }>;
   questions_to_ask: string[];
   study_plan_30_60_90: {
-    day_30: string[];
-    day_60: string[];
-    day_90: string[];
+    day_30?: {
+      title?: string;
+      focus_areas?: string[];
+      recommended_cert_domains?: string[];
+    } | string[];
+    day_60?: {
+      title?: string;
+      focus_areas?: string[];
+      recommended_cert_domains?: string[];
+    } | string[];
+    day_90?: {
+      title?: string;
+      focus_areas?: string[];
+      recommended_cert_domains?: string[];
+    } | string[];
+    [key: string]: any;
   };
   raw_input_text?: string;
   created_at?: string;
@@ -282,8 +304,21 @@ export interface StudyOrganization {
   linked_topics?: number[];
   linked_topic_details?: StudyTopic[];
   brief?: StudyInterviewBrief | null;
+  mock_interviews_count?: number;
+  latest_mock_score?: number | null;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface AvailableApplication {
+  id: number;
+  company: string;
+  role: string;
+  status: string;
+  link?: string;
+  date_applied?: string | null;
+  job_requirements?: string;
+  already_imported: boolean;
 }
 
 export interface StudyMockInterview {
@@ -298,10 +333,18 @@ export interface StudyMockInterview {
     timestamp?: string;
   }>;
   feedback?: {
-    overall_rating?: string;
+    overall_score?: number;
+    verdict?: string;
+    technical_score?: number;
+    communication_score?: number;
     strengths?: string[];
+    weaknesses?: string[];
     areas_to_improve?: string[];
+    recommended_study_topics?: string[];
+    detailed_feedback?: string;
+    overall_rating?: string;
     key_takeaways?: string[];
+    [key: string]: any;
   };
   overall_score: number;
   is_completed: boolean;

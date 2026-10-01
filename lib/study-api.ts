@@ -13,6 +13,7 @@ import type {
   StudyOrganization,
   StudyInterviewBrief,
   StudyMockInterview,
+  AvailableApplication,
   StudyLog,
   StudyGoal,
   StudyProgress,
@@ -372,6 +373,91 @@ export async function deleteStudyOrganization(id: number): Promise<void> {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Failed to delete organization");
+}
+
+export async function generateInterviewBrief(
+  orgId: number,
+  data?: { raw_text?: string }
+): Promise<StudyInterviewBrief> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/organizations/${orgId}/generate_brief/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data || {}),
+  });
+  if (!res.ok) throw new Error("Failed to generate interview brief");
+  return res.json();
+}
+
+export async function getAvailableApplications(): Promise<AvailableApplication[]> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/organizations/available_applications/`);
+  if (!res.ok) throw new Error("Failed to fetch available applications");
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
+export async function importJobApplication(applicationId: number): Promise<StudyOrganization> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/organizations/import_application/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ application_id: applicationId }),
+  });
+  if (!res.ok) throw new Error("Failed to import job application");
+  return res.json();
+}
+
+// ── Mock Interviews ────────────────────────────────────────────
+export async function getMockInterviews(orgId?: number): Promise<StudyMockInterview[]> {
+  const query = orgId ? `?organization=${orgId}` : "";
+  const res = await authenticatedFetch(`${STUDY_BASE}/mock-interviews/${query}`);
+  if (!res.ok) throw new Error("Failed to fetch mock interviews");
+  const data = await res.json();
+  return Array.isArray(data) ? data : data.results || [];
+}
+
+export async function getMockInterview(id: number): Promise<StudyMockInterview> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/mock-interviews/${id}/`);
+  if (!res.ok) throw new Error("Failed to fetch mock interview");
+  return res.json();
+}
+
+export async function startMockInterview(
+  orgId: number,
+  data?: { role_title?: string; mode?: string }
+): Promise<StudyMockInterview & { interviewer_response?: string }> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/organizations/${orgId}/start_mock_interview/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data || {}),
+  });
+  if (!res.ok) throw new Error("Failed to start mock interview");
+  return res.json();
+}
+
+export async function respondToMockInterview(
+  mockId: number,
+  data: { candidate_message: string; mode?: string }
+): Promise<{
+  interviewer_response: string;
+  transcript: Array<{ role: "interviewer" | "candidate" | "system"; content: string; timestamp?: string }>;
+  turn_count: number;
+  is_completed: boolean;
+}> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/mock-interviews/${mockId}/respond/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to submit response in mock interview");
+  return res.json();
+}
+
+export async function finishMockInterview(mockId: number): Promise<StudyMockInterview> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/mock-interviews/${mockId}/finish/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to finish mock interview");
+  return res.json();
 }
 
 // ── Study Logs & Activity ──────────────────────────────────────

@@ -48,7 +48,7 @@ export default function StudyPlatformLayout({
                 <Sparkles className="w-3 h-3 text-indigo-300" />
                 Private Study Platform
               </span>
-              <span className="text-xs text-slate-400 font-mono">v1.0 (Phase 1)</span>
+              <span className="text-xs text-slate-400 font-mono">v1.0 (Phase 3 Active)</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">
               Certification & Interview Mastery Hub
