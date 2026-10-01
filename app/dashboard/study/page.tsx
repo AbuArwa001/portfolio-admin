@@ -60,6 +60,79 @@ export default function StudyOverviewPage() {
   const [dailyMinutesInput, setDailyMinutesInput] = React.useState(60);
   const [isSavingGoal, setIsSavingGoal] = React.useState(false);
 
+  // Backup & Export modal state
+  const [isBackupModalOpen, setIsBackupModalOpen] = React.useState(false);
+  const [isExporting, setIsExporting] = React.useState(false);
+  const [isImporting, setIsImporting] = React.useState(false);
+  const [backupMessage, setBackupMessage] = React.useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleDownloadQuestions = async () => {
+    try {
+      setIsExporting(true);
+      const data = await exportStudyQuestions({
+        cert: activeCertTrack === "CCNA" ? "CCNA-200-301" : "AWS-SAA-C03",
+      });
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `study-questions-${activeCertTrack.toLowerCase()}-${new Date().toISOString().split("T")[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setBackupMessage({ type: "success", text: `Exported ${data.count} questions successfully.` });
+    } catch (err: any) {
+      setBackupMessage({ type: "error", text: err.message || "Failed to export questions." });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDownloadFlashcards = async () => {
+    try {
+      setIsExporting(true);
+      const data = await exportStudyFlashcards();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `study-flashcards-${new Date().toISOString().split("T")[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setBackupMessage({ type: "success", text: `Exported ${data.count} flashcards successfully.` });
+    } catch (err: any) {
+      setBackupMessage({ type: "error", text: err.message || "Failed to export flashcards." });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportJsonFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsImporting(true);
+      setBackupMessage(null);
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const list = Array.isArray(parsed) ? parsed : parsed.questions || [];
+      if (!Array.isArray(list) || list.length === 0) {
+        throw new Error("No valid questions found in uploaded JSON file.");
+      }
+      const res = await importStudyQuestions(list);
+      setBackupMessage({
+        type: "success",
+        text: `Import complete: ${res.created_count} created, ${res.updated_count} updated (${res.total_processed} processed).`,
+      });
+      loadData();
+    } catch (err: any) {
+      setBackupMessage({ type: "error", text: err.message || "Failed to import JSON file." });
+    } finally {
+      setIsImporting(false);
+      e.target.value = "";
+    }
+  };
+
   const loadData = React.useCallback(async () => {
     try {
       setLoading(true);
