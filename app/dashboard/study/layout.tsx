@@ -14,10 +14,12 @@ import {
   Clock,
   Sparkles,
   ChevronRight,
+  Play,
 } from "lucide-react";
 
 const NAV_TABS = [
   { label: "Overview", href: "/dashboard/study", icon: GraduationCap, exact: true },
+  { label: "Quiz & Mock Exams", href: "/dashboard/study/exam", icon: Play },
   { label: "Cisco CCNA (200-301)", href: "/dashboard/study/ccna", icon: Network },
   { label: "AWS Solutions Architect (SAA-C03)", href: "/dashboard/study/aws", icon: Cloud },
   { label: "Interview Prep", href: "/dashboard/study/interviews", icon: Building2 },
