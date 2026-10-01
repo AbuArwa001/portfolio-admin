@@ -115,6 +115,32 @@ export async function resetLabAttempt(labId: number): Promise<{ status: string; 
   return res.json();
 }
 
+export async function confirmLabTeardown(
+  labId: number,
+  data?: { notes?: string; time_spent_seconds?: number }
+): Promise<{ status: string; message: string; attempt: StudyLabAttempt }> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/labs/${labId}/confirm_teardown/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data || {}),
+  });
+  if (!res.ok) throw new Error("Failed to confirm lab teardown");
+  return res.json();
+}
+
+export async function verifyAwsChecklist(
+  labId: number,
+  data: { checked_items: string[]; time_spent_seconds?: number }
+): Promise<{ attempt: StudyLabAttempt; checker_results: LabCheckerResult }> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/labs/${labId}/verify_aws_checklist/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to evaluate AWS verification checks");
+  return res.json();
+}
+
 // ── Questions & Question Banks ─────────────────────────────────
 export async function getStudyQuestions(params?: {
   cert?: string;

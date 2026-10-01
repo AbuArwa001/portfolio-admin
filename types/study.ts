@@ -61,6 +61,7 @@ export interface LabConfigRule {
 export interface LabAwsVerificationCheck {
   service: string;
   check_type: string;
+  verify_prompt?: string;
   resource_name?: string;
   resource_tag?: string;
   params?: Record<string, any>;
