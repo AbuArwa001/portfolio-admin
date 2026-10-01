@@ -26,6 +26,7 @@ import {
   AlertTriangle,
   Brain,
   TrendingUp,
+  X,
 } from "lucide-react";
 import {
   getStudyCertifications,
