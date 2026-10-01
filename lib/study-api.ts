@@ -533,6 +533,27 @@ export async function logStudySession(data: {
   return res.json();
 }
 
+export async function setStudyGoal(data: {
+  certification_id: number;
+  target_exam_date: string;
+  daily_goal_minutes?: number;
+  weekly_goal_days?: number;
+}): Promise<StudyGoal> {
+  const res = await authenticatedFetch(`${STUDY_BASE}/study-goals/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      certification: data.certification_id,
+      target_exam_date: data.target_exam_date,
+      daily_goal_minutes: data.daily_goal_minutes || 60,
+      weekly_goal_days: data.weekly_goal_days || 5,
+      is_active: true,
+    }),
+  });
+  if (!res.ok) throw new Error("Failed to set study goal");
+  return res.json();
+}
+
 // ── Public Badge Endpoint ──────────────────────────────────────
 export async function getPublicStudyBadge(): Promise<PublicStudyBadgeData> {
   const res = await fetch(`${STUDY_BASE}/public-badge/`, {

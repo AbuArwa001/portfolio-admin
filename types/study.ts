@@ -392,6 +392,35 @@ export interface StudyGoal {
   updated_at?: string;
 }
 
+export interface StudyDomainProgress {
+  domain_number: number;
+  domain_name: string;
+  weight_pct: number;
+  total_topics: number;
+  total_labs: number;
+  completed_labs: number;
+  lab_completion_pct: number;
+  questions_answered: number;
+  accuracy_pct: number;
+  readiness_score: number;
+}
+
+export interface StudyActivityHeatmapDay {
+  date: string;
+  count: number;
+  minutes: number;
+}
+
+export interface StudyGoalData {
+  id?: number;
+  target_exam_date: string;
+  days_remaining: number;
+  daily_goal_minutes: number;
+  weekly_goal_days: number;
+  recommended_daily_questions: number;
+  recommended_weekly_labs: number;
+}
+
 export interface StudyProgress {
   certification: string;
   name: string;
@@ -401,9 +430,14 @@ export interface StudyProgress {
   lab_completion_pct: number;
   total_questions_attempted: number;
   accuracy_pct: number;
+  topic_coverage_pct?: number;
   mock_exams_taken: number;
   mock_exam_average: number;
   readiness_score: number;
+  streak_days?: number;
+  domain_breakdown?: StudyDomainProgress[];
+  heatmap?: StudyActivityHeatmapDay[];
+  goal?: StudyGoalData | null;
 }
 
 export interface PublicStudyBadgeData {
