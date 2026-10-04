@@ -215,6 +215,30 @@ export default function CcnaStudyPage() {
         />
       </div>
 
+      {/* ── Lab Builder CTA Banner ── */}
+      <Link
+        href="/dashboard/study/lab-builder"
+        className="group p-4 rounded-2xl border border-[#58a6ff]/30 bg-gradient-to-r from-[#1f2f3f] to-[#0d1117] flex items-center gap-4 hover:border-[#58a6ff]/60 transition-all shadow-sm"
+      >
+        <div className="p-3 rounded-xl bg-[#58a6ff]/15 border border-[#58a6ff]/30 shrink-0">
+          <Network className="w-6 h-6 text-[#58a6ff]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-mono font-bold uppercase text-[#58a6ff] tracking-wider">NEW</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#3fb950]/20 text-[#3fb950] font-mono font-bold">14 Device Types</span>
+          </div>
+          <h3 className="text-sm font-bold text-white mt-0.5">Custom Lab Builder</h3>
+          <p className="text-xs text-slate-400">
+            Build your own labs — Cisco, Sophos, Palo Alto, FortiGate, MikroTik, Windows PCs, Linux servers and more. Drag, connect, and simulate.
+          </p>
+        </div>
+        <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#58a6ff] group-hover:bg-[#79b8ff] text-[#0d1117] font-bold text-xs shrink-0 transition-colors">
+          <Zap className="w-3.5 h-3.5" />
+          Open Builder
+        </div>
+      </Link>
+
       {/* Featured Lab Showcase Banner (if labs available) */}
       {labs.length > 0 && (
         <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-slate-900 border border-blue-500/30 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
