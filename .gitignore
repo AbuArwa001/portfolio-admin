@@ -43,7 +43,4 @@ next-env.d.ts
 .env.local
 .env.development.local
 .env.test.local
-STUDY_PLATFORM_GUIDE.md
-STUDY_PLATFORM_PHASE_6_GUIDE.md
-STUDY_PLATFORM_PHASE_6_GUIDE.html
-STUDY_PLATFORM_PHASE_6_FRONTEND.html
+docs/
